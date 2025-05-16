@@ -26,4 +26,10 @@ public class JpaCursoRepositoryAdapter implements CursoRepository {
     public void delete(CursoEntity curso) {
         jpaCursoRepository.delete(curso);
     }
+
+    @Override
+    public CursoEntity save(CursoEntity curso) {
+        jpaCursoRepository.save(curso);
+        return curso;
+    }
 }

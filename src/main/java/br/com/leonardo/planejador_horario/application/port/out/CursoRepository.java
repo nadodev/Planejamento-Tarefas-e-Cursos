@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface CursoRepository {
     Optional<CursoEntity> findById(Long id);
     void delete(CursoEntity curso);
+    CursoEntity save(CursoEntity curso);
 }

@@ -2,6 +2,7 @@ package br.com.leonardo.planejador_horario.adapter.inbound.controller;
 
 
 import br.com.leonardo.planejador_horario.adapter.inbound.dto.CursoDTO;
+import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
 import br.com.leonardo.planejador_horario.domain.exception.UsuarioNaoEncontradoException;
 import br.com.leonardo.planejador_horario.domain.model.Curso;
 import br.com.leonardo.planejador_horario.domain.model.Usuario;
@@ -9,10 +10,12 @@ import br.com.leonardo.planejador_horario.usecase.curso.CriarCursoUseCase;
 import br.com.leonardo.planejador_horario.usecase.curso.DeletaCursoUseCase;
 import br.com.leonardo.planejador_horario.usecase.curso.ListarCursosUseCase;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,7 +27,11 @@ public class CursoController {
     private final ListarCursosUseCase listarCursosUseCase;
     private final DeletaCursoUseCase deletarCursoUseCase;
 
-    public CursoController(CriarCursoUseCase criarCursoUseCase, ListarCursosUseCase listarCursosUseCase, DeletaCursoUseCase deletarCursoUseCase) {
+    public CursoController(
+            CriarCursoUseCase criarCursoUseCase,
+            ListarCursosUseCase listarCursosUseCase,
+            @Qualifier("deletarCursoUsoCaseImpl") DeletaCursoUseCase deletarCursoUseCase
+    ) {
         this.criarCursoUseCase = criarCursoUseCase;
         this.listarCursosUseCase = listarCursosUseCase;
         this.deletarCursoUseCase = deletarCursoUseCase;
@@ -45,9 +52,22 @@ public class CursoController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<List<CursoDTO>> listarCursos() {
+        List<CursoDTO> cursos = listarCursosUseCase.listarCurso()
+                .stream()
+                .map(CursoDTO::fromEntity)
+                .toList();
+
+        return ResponseEntity.ok(cursos);
+    }
+
     @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<Optional<Usuario>> listarCursos(@PathVariable Long usuarioId) {
-        Optional<Usuario> cursos = listarCursosUseCase.listarPorUsuario(usuarioId);
+    public ResponseEntity<List<CursoDTO>> listarCursos(@PathVariable Long usuarioId) {
+        List<CursoDTO> cursos = listarCursosUseCase.listarPorUsuario(usuarioId).stream()
+                .map(CursoDTO::fromEntity)
+                .toList();
+
         return ResponseEntity.ok(cursos);
     }
 

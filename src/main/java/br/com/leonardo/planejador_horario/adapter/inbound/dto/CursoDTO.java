@@ -1,5 +1,7 @@
 package br.com.leonardo.planejador_horario.adapter.inbound.dto;
 
+import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
+
 import java.time.LocalDate;
 
 public class CursoDTO {
@@ -9,6 +11,15 @@ public class CursoDTO {
     private int cargaHoraria;
     private int prioridade;
     private LocalDate prazoFinal;
+
+    public static CursoDTO fromEntity(CursoEntity entity) {
+        CursoDTO dto = new CursoDTO();
+        dto.setId(entity.getId());
+        dto.setNome(entity.getNome());
+        dto.setCargaHoraria(entity.getCargaHoraria());
+        dto.setPrioridade(entity.getPrioridade());
+        return dto;
+    }
 
     private Long usuario;
 

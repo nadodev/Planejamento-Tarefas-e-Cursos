@@ -6,6 +6,7 @@ import br.com.leonardo.planejador_horario.adapter.outbound.persistence.JpaUsuari
 import br.com.leonardo.planejador_horario.adapter.outbound.mapper.CursoMapper;
 import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
 import br.com.leonardo.planejador_horario.adapter.outbound.entity.UsuarioEntity;
+import br.com.leonardo.planejador_horario.application.port.out.CursoRepository;
 import br.com.leonardo.planejador_horario.domain.exception.CursoException;
 import br.com.leonardo.planejador_horario.domain.model.Curso;
 import br.com.leonardo.planejador_horario.domain.validator.CursoValidator;
@@ -20,14 +21,14 @@ import java.util.Optional;
 @Service
 public class CriarCursoUseCaseImpl implements CriarCursoUseCase {
 
-    private final JpaCursoRepository cursoRepository;
+    private final CursoRepository cursoRepository;
     private final CursoMapper cursoMapper;
     private final CursoValidator cursoValidator;
 
     private final JpaUsuarioRepository usuarioRepository;
 
 
-    public CriarCursoUseCaseImpl(JpaCursoRepository cursoRepository,
+    public CriarCursoUseCaseImpl(CursoRepository cursoRepository,
                                  CursoMapper cursoMapper, CursoValidator cursoValidator, JpaUsuarioRepository usuarioRepository) {
         this.cursoRepository = cursoRepository;
         this.cursoMapper = cursoMapper;

@@ -5,31 +5,49 @@ import br.com.leonardo.planejador_horario.domain.exception.CursoNaoEncontradoExc
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import br.com.leonardo.planejador_horario.domain.exception.UsuarioNaoEncontradoException;
+import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.Map;
 
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(CursoException.class)
-    public ResponseEntity<ErrorResponse> handleCursoException(CursoException ex) {
-        HttpStatus status = ex instanceof CursoNaoEncontradoException
-                ? HttpStatus.NOT_FOUND
-                : HttpStatus.BAD_REQUEST;
-
-        return ResponseEntity.status(status)
-                .body(new ErrorResponse(ex.getMessage()));
+    @ExceptionHandler(CursoNaoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleCursoNaoEncontrado(CursoNaoEncontradoException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                Map.of(
+                        "timestamp", ZonedDateTime.now(),
+                        "status", HttpStatus.NOT_FOUND.value(),
+                        "error", "Curso não encontrado",
+                        "message", ex.getMessage(),
+                        "path", "/api/cursos" // opcional: pode usar um interceptor para path real
+                )
+        );
     }
 
-    public static class ErrorResponse {
-        private String message;
-        private LocalDateTime timestamp;
-        private String path;
+    @ExceptionHandler(UsuarioNaoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleUsuarioNaoEncontrado(UsuarioNaoEncontradoException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                Map.of(
+                        "timestamp", ZonedDateTime.now(),
+                        "status", HttpStatus.NOT_FOUND.value(),
+                        "error", "Usuário não encontrado",
+                        "message", ex.getMessage()
+                )
+        );
+    }
 
-        public ErrorResponse(String message) {
-            this.message = message;
-            this.timestamp = LocalDateTime.now();
-        }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                Map.of(
+                        "timestamp", ZonedDateTime.now(),
+                        "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        "error", "Erro interno",
+                        "message", "Algo deu errado. Tente novamente mais tarde."
+                )
+        );
     }
 }

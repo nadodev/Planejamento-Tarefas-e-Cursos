@@ -6,6 +6,7 @@ import br.com.leonardo.planejador_horario.domain.exception.UsuarioNaoEncontradoE
 import br.com.leonardo.planejador_horario.domain.model.Curso;
 import br.com.leonardo.planejador_horario.domain.model.Usuario;
 import br.com.leonardo.planejador_horario.usecase.curso.CriarCursoUseCase;
+import br.com.leonardo.planejador_horario.usecase.curso.DeletaCursoUseCase;
 import br.com.leonardo.planejador_horario.usecase.curso.ListarCursosUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,10 +22,12 @@ public class CursoController {
 
     private final CriarCursoUseCase criarCursoUseCase;
     private final ListarCursosUseCase listarCursosUseCase;
+    private final DeletaCursoUseCase deletarCursoUseCase;
 
-    public CursoController(CriarCursoUseCase criarCursoUseCase, ListarCursosUseCase listarCursosUseCase) {
+    public CursoController(CriarCursoUseCase criarCursoUseCase, ListarCursosUseCase listarCursosUseCase, DeletaCursoUseCase deletarCursoUseCase) {
         this.criarCursoUseCase = criarCursoUseCase;
         this.listarCursosUseCase = listarCursosUseCase;
+        this.deletarCursoUseCase = deletarCursoUseCase;
     }
 
     @PostMapping
@@ -46,5 +49,10 @@ public class CursoController {
     public ResponseEntity<Optional<Usuario>> listarCursos(@PathVariable Long usuarioId) {
         Optional<Usuario> cursos = listarCursosUseCase.listarPorUsuario(usuarioId);
         return ResponseEntity.ok(cursos);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public void deletar(@PathVariable Long id) {
+        deletarCursoUseCase.deletar(id);
     }
 }

@@ -1,7 +1,8 @@
 package br.com.leonardo.planejador_horario.adapter.outbound.repository;
 
 
-import br.com.leonardo.planejador_horario.adapter.outbound.JpaCursoRepository;
+import br.com.leonardo.planejador_horario.adapter.outbound.persistence.JpaCursoRepository;
+import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
 import br.com.leonardo.planejador_horario.application.port.out.CursoRepository;
 import org.springframework.stereotype.Repository;
 

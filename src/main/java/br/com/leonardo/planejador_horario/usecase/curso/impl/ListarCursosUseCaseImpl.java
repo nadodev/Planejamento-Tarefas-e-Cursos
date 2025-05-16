@@ -1,7 +1,7 @@
 package br.com.leonardo.planejador_horario.usecase.curso.impl;
 
-import br.com.leonardo.planejador_horario.adapter.outbound.JpaCursoRepository;
-import br.com.leonardo.planejador_horario.adapter.outbound.JpaUsuarioRepository;
+import br.com.leonardo.planejador_horario.adapter.outbound.persistence.JpaCursoRepository;
+import br.com.leonardo.planejador_horario.adapter.outbound.persistence.JpaUsuarioRepository;
 import br.com.leonardo.planejador_horario.adapter.outbound.mapper.UsuarioMapper;
 import br.com.leonardo.planejador_horario.domain.model.Usuario;
 import br.com.leonardo.planejador_horario.usecase.curso.ListarCursosUseCase;

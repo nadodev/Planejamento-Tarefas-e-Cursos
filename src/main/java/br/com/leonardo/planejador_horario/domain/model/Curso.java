@@ -1,7 +1,7 @@
 package br.com.leonardo.planejador_horario.domain.model;
 
 
-import br.com.leonardo.planejador_horario.adapter.outbound.repository.UsuarioEntity;
+import br.com.leonardo.planejador_horario.adapter.outbound.entity.UsuarioEntity;
 
 import java.time.LocalDate;
 

@@ -1,4 +1,4 @@
-package br.com.leonardo.planejador_horario.adapter.outbound.repository;
+package br.com.leonardo.planejador_horario.adapter.outbound.entity;
 
 import jakarta.persistence.*;
 

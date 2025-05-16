@@ -1,11 +1,11 @@
 package br.com.leonardo.planejador_horario.usecase.curso.impl;
 
 import br.com.leonardo.planejador_horario.adapter.inbound.dto.CursoDTO;
-import br.com.leonardo.planejador_horario.adapter.outbound.JpaCursoRepository;
-import br.com.leonardo.planejador_horario.adapter.outbound.JpaUsuarioRepository;
+import br.com.leonardo.planejador_horario.adapter.outbound.persistence.JpaCursoRepository;
+import br.com.leonardo.planejador_horario.adapter.outbound.persistence.JpaUsuarioRepository;
 import br.com.leonardo.planejador_horario.adapter.outbound.mapper.CursoMapper;
-import br.com.leonardo.planejador_horario.adapter.outbound.repository.CursoEntity;
-import br.com.leonardo.planejador_horario.adapter.outbound.repository.UsuarioEntity;
+import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
+import br.com.leonardo.planejador_horario.adapter.outbound.entity.UsuarioEntity;
 import br.com.leonardo.planejador_horario.domain.exception.CursoException;
 import br.com.leonardo.planejador_horario.domain.model.Curso;
 import br.com.leonardo.planejador_horario.domain.validator.CursoValidator;

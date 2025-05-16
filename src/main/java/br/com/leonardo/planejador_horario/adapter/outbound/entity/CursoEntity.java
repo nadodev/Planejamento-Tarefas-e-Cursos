@@ -1,7 +1,6 @@
-package br.com.leonardo.planejador_horario.adapter.outbound.repository;
+package br.com.leonardo.planejador_horario.adapter.outbound.entity;
 
 
-import br.com.leonardo.planejador_horario.domain.model.Usuario;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;

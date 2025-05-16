@@ -1,6 +1,6 @@
 package br.com.leonardo.planejador_horario.adapter.outbound.mapper;
 
-import br.com.leonardo.planejador_horario.adapter.outbound.repository.CursoEntity;
+import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
 import br.com.leonardo.planejador_horario.domain.model.Curso;
 import org.springframework.stereotype.Component;
 

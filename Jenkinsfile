@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Defina explicitamente o JAVA_HOME
-        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'  
+        JAVA_HOME = '   '  
         PATH = "${JAVA_HOME}/bin:${PATH}"
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
@@ -19,17 +19,18 @@ pipeline {
 
         stage('Build Maven') {
             steps {
+                sh 'chmod +x mvnw'
                 sh '''
-                    # Garante permissões de execução
-                    chmod +x mvnw
-                    
-                    # Executa o build com o Java 21
-                    export JAVA_HOME=${JAVA_HOME}
+                    export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+                    export PATH="$JAVA_HOME/bin:$PATH"
+                    echo "Java version:"
+                    java -version
+                    echo "Maven version:"
+                    ./mvnw --version
                     ./mvnw clean package -DskipTests
                 '''
             }
         }
-
 
         stage('Build Docker Image') {
             steps {

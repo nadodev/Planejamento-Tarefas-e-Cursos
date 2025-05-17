@@ -5,14 +5,38 @@ pipeline {
         COMPOSE_FILE = 'docker-compose.yml'
         DB_HOST = 'db'
         DB_PORT = '3306'
-        DOCKER_COMPOSE_VERSION = '2.21.0'  // Versão específica do Docker Compose
+        DOCKER_COMPOSE_VERSION = '2.21.0'
+        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk'
+        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
         stage('Setup Tools') {
             steps {
                 script {
-                    // Verifica e instala Docker Compose se necessário
+                    // Instala Java 21
+                    sh '''
+                        echo "Verificando/Instalando Java 21..."
+                        if ! command -v java &> /dev/null || ! java -version 2>&1 | grep -q "version \\"21"; then
+                            echo "Instalando Java 21..."
+                            if command -v apt-get &> /dev/null; then
+                                # Debian/Ubuntu
+                                apt-get update
+                                apt-get install -y openjdk-21-jdk
+                            elif command -v yum &> /dev/null; then
+                                # RHEL/CentOS
+                                yum install -y java-21-openjdk-devel
+                            else
+                                echo "Sistema não suportado para instalação automática do Java"
+                                exit 1
+                            fi
+                        fi
+                        
+                        echo "Versão do Java:"
+                        java -version
+                    '''
+
+                    // Verifica e instala Docker e Docker Compose
                     sh '''
                         echo "Verificando Docker..."
                         docker --version || {
@@ -23,13 +47,11 @@ pipeline {
                         echo "Verificando/Instalando Docker Compose..."
                         if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
                             echo "Instalando Docker Compose..."
-                            # Instala docker-compose binário
                             curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
                             chmod +x /usr/local/bin/docker-compose
                             echo "Docker Compose instalado com sucesso"
                         fi
 
-                        # Verifica a instalação
                         if command -v docker-compose &> /dev/null; then
                             echo "Usando docker-compose standalone:"
                             docker-compose --version
@@ -102,11 +124,19 @@ pipeline {
         stage('Build & Test') {
             steps {
                 sh '''
+                    echo "Ambiente Java:"
+                    echo "JAVA_HOME: $JAVA_HOME"
+                    java -version
+                    
                     if [ -f "./mvnw" ]; then
                         chmod +x ./mvnw
-                        ./mvnw clean verify
+                        export JAVA_HOME=${JAVA_HOME}
+                        ./mvnw -v
+                        ./mvnw clean verify -Dmaven.compiler.release=21
                     elif [ -f "./gradlew" ]; then
                         chmod +x ./gradlew
+                        export JAVA_HOME=${JAVA_HOME}
+                        ./gradlew -v
                         ./gradlew clean test
                     else
                         echo "Nem Maven Wrapper nem Gradle Wrapper encontrados!"

@@ -1,6 +1,8 @@
 package br.com.leonardo.planejador_horario.adapter.outbound.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -35,6 +37,7 @@ public class CursoEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
+    @JsonIgnore
     private UsuarioEntity usuario;
 
 

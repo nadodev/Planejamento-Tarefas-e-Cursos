@@ -21,8 +21,7 @@ public class GlobalExceptionHandler {
                         "timestamp", ZonedDateTime.now(),
                         "status", HttpStatus.NOT_FOUND.value(),
                         "error", "Curso não encontrado",
-                        "message", ex.getMessage(),
-                        "path", "/api/cursos" // opcional: pode usar um interceptor para path real
+                        "message", ex.getMessage()
                 )
         );
     }

@@ -9,6 +9,12 @@ import br.com.leonardo.planejador_horario.domain.model.Usuario;
 import br.com.leonardo.planejador_horario.usecase.curso.CriarCursoUseCase;
 import br.com.leonardo.planejador_horario.usecase.curso.DeletaCursoUseCase;
 import br.com.leonardo.planejador_horario.usecase.curso.ListarCursosUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -17,9 +23,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
+@Tag(name = "Cursos", description = "Operações relacionadas a cursos")
 @RequestMapping("/api/cursos")
 public class CursoController {
 
@@ -38,6 +44,14 @@ public class CursoController {
     }
 
     @PostMapping
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Results are ok", content = { @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ResponseEntity.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "resource not found",
+                    content = @Content) })
+    @Operation(summary = "Springdoc open api sample API")
     public ResponseEntity<?> criarCurso(@Valid @RequestBody CursoDTO request) {
         try {
             Curso cursoCriado = criarCursoUseCase.criar(request); // delega tudo

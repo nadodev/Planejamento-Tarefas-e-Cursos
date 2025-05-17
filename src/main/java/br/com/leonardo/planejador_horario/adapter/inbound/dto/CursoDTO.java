@@ -1,12 +1,14 @@
 package br.com.leonardo.planejador_horario.adapter.inbound.dto;
 
 import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 
 public class CursoDTO {
 
     private Long id;
+    @Schema(description = "Nome do curso", example = "Java Básico")
     private String nome;
     private int cargaHoraria;
     private int prioridade;
@@ -18,6 +20,7 @@ public class CursoDTO {
         dto.setNome(entity.getNome());
         dto.setCargaHoraria(entity.getCargaHoraria());
         dto.setPrioridade(entity.getPrioridade());
+        dto.setPrazoFinal(entity.getPrazoFinal());
         return dto;
     }
 

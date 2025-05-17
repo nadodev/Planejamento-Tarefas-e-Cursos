@@ -12,7 +12,7 @@ pipeline {
             steps {
                 script {
                     // Sobe containers em segundo plano
-                    sh 'docker-compose up -d'
+                    sh 'docker compose up -d'
                 }
             }
         }

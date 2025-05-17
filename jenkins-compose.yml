@@ -2,17 +2,21 @@ version: '3.8'
 
 services:
   jenkins:
-    image: jenkins/jenkins:lts
-    privileged: true
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins
+    restart: unless-stopped
     user: root
     ports:
       - "8081:8080"
       - "50000:50000"
-    container_name: jenkins
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker
+      - /usr/lib/jvm/java-21-openjdk-amd64:/usr/lib/jvm/java-21-openjdk-amd64
+      - /usr/bin/docker:/usr/bin/docker:ro
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - JENKINS_OPTS=--argumentsRealm.roles.user=admin --argumentsRealm.passwd.admin=admin --argumentsRealm.roles.admin=admin
     networks:
       - jenkins-network
 
@@ -21,4 +25,4 @@ networks:
     driver: bridge
 
 volumes:
-  jenkins_home: 
+  jenkins_home:

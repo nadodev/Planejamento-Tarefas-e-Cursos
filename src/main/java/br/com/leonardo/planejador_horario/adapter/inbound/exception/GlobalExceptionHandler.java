@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
                         "timestamp", ZonedDateTime.now(),
                         "status", HttpStatus.NOT_FOUND.value(),
                         "error", "Usuário não encontrado",
-                        "message", ex.getMessage()
+                        "message", "Usuário não encontrado com o email fornecido"
                 )
         );
     }
@@ -76,44 +76,21 @@ public class GlobalExceptionHandler {
                         "timestamp", ZonedDateTime.now(),
                         "status", HttpStatus.UNAUTHORIZED.value(),
                         "error", "Erro de autenticação",
-                        "message", "Falha na autenticação: " + ex.getMessage()
+                        "message", "Falha na autenticação. Por favor, verifique suas credenciais."
                 )
         );
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-        String message = ex.getMostSpecificCause().getMessage();
-        String error = "Erro de validação";
-        String userMessage = "Erro ao processar dados";
-
-        // Tratamento específico para campos obrigatórios nulos
-        if (message.contains("cannot be null")) {
-            String campo = message.substring(message.indexOf('[') + 1, message.indexOf(']'))
-                    .replace("Column '", "")
-                    .replace("'", "");
-            
-            // Mapeamento de nomes de campos para português
-            Map<String, String> camposEmPortugues = Map.of(
-                "carga_horaria", "Carga Horária",
-                "nome", "Nome",
-                "prazo_final", "Prazo Final",
-                "prioridade", "Prioridade",
-                "usuario_id", "Usuário"
-            );
-
-            String campoTraduzido = camposEmPortugues.getOrDefault(campo, campo);
-            userMessage = "O campo " + campoTraduzido + " é obrigatório";
-            error = "Campo obrigatório não preenchido";
-        }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", ZonedDateTime.now());
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put("error", error);
-        response.put("message", userMessage);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                Map.of(
+                        "timestamp", ZonedDateTime.now(),
+                        "status", HttpStatus.BAD_REQUEST.value(),
+                        "error", "Erro de integridade de dados",
+                        "message", "Não foi possível completar a operação devido a uma violação de integridade de dados"
+                )
+        );
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -123,8 +100,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .collect(Collectors.toMap(
                         error -> error.getField(),
-                        error -> error.getDefaultMessage(),
-                        (error1, error2) -> error1
+                        error -> error.getDefaultMessage()
                 ));
 
         Map<String, Object> response = new HashMap<>();
@@ -132,7 +108,7 @@ public class GlobalExceptionHandler {
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", "Erro de validação");
         response.put("message", "Existem campos inválidos na requisição");
-        response.put("details", errors);
+        response.put("errors", errors);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -144,7 +120,7 @@ public class GlobalExceptionHandler {
                         "timestamp", ZonedDateTime.now(),
                         "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         "error", "Erro interno",
-                        "message", "Algo deu errado. Tente novamente mais tarde."
+                        "message", "Ocorreu um erro interno no servidor. Por favor, tente novamente mais tarde."
                 )
         );
     }

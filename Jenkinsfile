@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 21' // Nome cadastrado no Jenkins em "Manage Jenkins → Global Tool Configuration"
+        jdk 'JDK 21' // Certifique-se que está cadastrado em "Manage Jenkins → Global Tool Configuration"
     }
 
     environment {
-        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64' // Resolve dinamicamente o path
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
     }
@@ -20,6 +19,11 @@ pipeline {
 
         stage('Build Maven') {
             steps {
+                script {
+                    def javaHome = tool(name: 'JDK 21', type: 'jdk')
+                    env.JAVA_HOME = javaHome
+                    env.PATH = "${javaHome}/bin:${env.PATH}"
+                }
                 sh 'chmod +x mvnw'
                 sh './mvnw clean package -DskipTests'
             }

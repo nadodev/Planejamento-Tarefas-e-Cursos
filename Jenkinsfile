@@ -17,20 +17,49 @@ pipeline {
             }
         }
 
-       stage('Build Maven') {
+      stage('Build Maven') {
     steps {
-        sh '''
-            export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-            export PATH="$JAVA_HOME/bin:$PATH"
+        script {
+            // Força o uso do Java 21
+            def javaHome = '/usr/lib/jvm/java-21-openjdk-amd64'
             
-            # Verifique sem sudo
-            java -version
-            ./mvnw --version
-            
-            ./mvnw clean package -DskipTests
-        '''
+            sh """
+                # Configuração definitiva do ambiente
+                unset JAVA_HOME
+                unset PATH
+                export JAVA_HOME=${javaHome}
+                export PATH="${javaHome}/bin:/usr/local/bin:/usr/bin:/bin"
+                
+                # Verificações
+                echo "Java home: \$JAVA_HOME"
+                echo "Java version:"
+                ${javaHome}/bin/java -version
+                echo "Maven version:"
+                ./mvnw --version
+                
+                # Build
+                ./mvnw clean package -DskipTests
+            """
+        }
     }
 }
+        stage('Debug Environment') {
+            steps {
+                sh '''
+                    echo "=== Verificando Ambiente ==="
+                    echo "Java alternatives:"
+                    ls -l /etc/alternatives/java
+                    echo "Java links:"
+                    ls -l /usr/bin/java
+                    echo "Java installations:"
+                    ls -l /usr/lib/jvm/
+                    echo "Current Java:"
+                    which java
+                    readlink -f $(which java)
+                    java -version
+                '''
+            }
+        }
 
         stage('Build Docker Image') {
             steps {

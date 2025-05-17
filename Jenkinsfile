@@ -87,6 +87,22 @@ pipeline {
                 }
             }
         }
+        stage('Debug Environment') {
+            steps {
+                sh '''
+                    echo "=== Debug Information ==="
+                    echo "Current Java:"
+                    which java
+                    java -version
+                    echo "JAVA_HOME: $JAVA_HOME"
+                    echo "Tool JDK-21 path:"
+                    ls -la ${tool 'jdk-21'}
+                    echo "Environment:"
+                    env | sort
+                '''
+            }
+        }
+        
     }
 
     post {

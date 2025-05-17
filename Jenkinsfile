@@ -9,6 +9,8 @@ pipeline {
         DOCKER_TAG = "v${BUILD_NUMBER}"
     }
 
+    stages {
+       
         stage('Checkout') {
             steps {
                 checkout scm

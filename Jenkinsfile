@@ -15,14 +15,6 @@ pipeline {
             steps {
                 checkout scm
             }
-
-            steps {
-                sh '''
-                    echo "JAVA_HOME = $JAVA_HOME"
-                    ${JAVA_HOME}/bin/java -version
-                '''
-                sh './mvnw clean package -DskipTests'
-            }
         }
 
         stage('Build Maven') {

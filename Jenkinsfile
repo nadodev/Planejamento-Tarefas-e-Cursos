@@ -10,9 +10,26 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
+        // Configura caminho alternativo para docker-compose
+        COMPOSE_PATH = "/usr/local/bin/docker-compose"
     }
 
     stages {
+        stage('Setup Environment') {
+            steps {
+                sh '''
+                    # Instala docker-compose se não existir
+                    if ! command -v docker-compose &> /dev/null; then
+                        echo "Instalando docker-compose..."
+                        curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+                        -o ${COMPOSE_PATH}
+                        chmod +x ${COMPOSE_PATH}
+                    fi
+                    ${COMPOSE_PATH} --version
+                '''
+            }
+        }
+        
         stage('Build') {
             steps {
                 sh '''
@@ -37,8 +54,10 @@ pipeline {
         
         stage('Deploy') {
             steps {
-                sh 'docker-compose down || true'
-                sh 'docker-compose up -d --build'
+                sh '''
+                    ${COMPOSE_PATH} down || true
+                    ${COMPOSE_PATH} up -d --build
+                '''
             }
         }
     }
@@ -49,11 +68,13 @@ pipeline {
         }
         success {
             echo 'Pipeline executado com sucesso!'
-            slackSend(color: 'good', message: "Build ${DOCKER_IMAGE}:${DOCKER_TAG} sucedida")
+            // Comente a linha abaixo se não tiver o plugin Slack instalado
+            // slackSend(color: 'good', message: "Build ${DOCKER_IMAGE}:${DOCKER_TAG} sucedida")
         }
         failure {
             echo 'Pipeline falhou! Verifique os logs.'
-            slackSend(color: 'danger', message: "Build ${JOB_NAME} falhou")
+            // Comente a linha abaixo se não tiver o plugin Slack instalado
+            // slackSend(color: 'danger', message: "Build ${JOB_NAME} falhou")
         }
     }
 }

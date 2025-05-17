@@ -1,0 +1,28 @@
+# Arquivos do Git
+.git
+.gitignore
+
+# Arquivos do Maven
+target/
+
+# Arquivos do IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Não ignorar
+!.mvn/
+!mvnw
+!mvnw.cmd
+!pom.xml
+!src/ 

@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     curl \
     netcat-openbsd \
+    tree \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia arquivos de build primeiro
@@ -19,11 +20,12 @@ COPY mvnw pom.xml ./
 RUN chmod +x mvnw && \
     ./mvnw dependency:go-offline
 
-# Copia o código fonte
+# Copia o código fonte e verifica a estrutura
 COPY src ./src
+RUN tree src/main/java/br/com/leonardo/planejador_horario
 
-# Executa o build
-RUN ./mvnw package -DskipTests
+# Executa o build com mais detalhes de debug
+RUN ./mvnw clean package -DskipTests -X
 
 # Copia o arquivo de configuração atualizado
 COPY src/main/resources/application.properties /app/target/classes/application.properties

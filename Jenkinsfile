@@ -2,12 +2,15 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 21' // Certifique-se que está cadastrado em "Manage Jenkins → Global Tool Configuration"
+        jdk 'jdk-21' // Certifique-se que está cadastrado em "Manage Jenkins → Global Tool Configuration"
+        maven 'maven' // Adicione também a configuração do Maven nas ferramentas globais
     }
 
     environment {
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
+        // Configurações adicionais para garantir o uso do Java 21
+        MAVEN_OPTS = "-Xmx1024m -Djava.home=${tool 'jdk-21'}"
     }
 
     stages {
@@ -17,15 +20,35 @@ pipeline {
             }
         }
 
-        stage('Build Maven') {
+        stage('Setup Environment') {
             steps {
                 script {
-                    def javaHome = tool(name: 'JDK 21', type: 'jdk')
+                    // Configura explicitamente o ambiente Java
+                    def javaHome = tool name: 'jdk-21', type: 'jdk'
                     env.JAVA_HOME = javaHome
                     env.PATH = "${javaHome}/bin:${env.PATH}"
+                    
+                    // Verificação do ambiente
+                    sh '''
+                        echo "Java version:"
+                        java -version
+                        echo "Maven version:"
+                        ./mvnw --version
+                    '''
                 }
-                sh 'chmod +x mvnw'
+            }
+        }
+
+        stage('Build Maven') {
+            steps {
+                sh 'chmod +x mvnw' // Garante permissões de execução
                 sh './mvnw clean package -DskipTests'
+            }
+            
+            post {
+                success {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
             }
         }
 
@@ -33,22 +56,35 @@ pipeline {
             steps {
                 sh './mvnw test'
             }
+            
+            post {
+                always {
+                    junit 'target/surefire-reports/**/*.xml' // Relatórios de teste
+                }
+            }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    // Build da imagem Docker
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", '--build-arg JAR_FILE=target/*.jar .')
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                sh '''
-                    docker-compose down
-                    docker-compose up -d
-                '''
+                script {
+                    // Para containers existentes
+                    sh 'docker-compose down || true'
+                    
+                    // Inicia os containers
+                    sh "docker-compose up -d"
+                    
+                    // Limpeza de containers antigos
+                    sh 'docker system prune -f'
+                }
             }
         }
     }
@@ -56,12 +92,16 @@ pipeline {
     post {
         always {
             cleanWs()
-        }
-        success {
-            echo 'Pipeline executado com sucesso!'
-        }
-        failure {
-            echo 'Pipeline falhou!'
+            script {
+                // Notificação do status do build
+                if (currentBuild.result == 'SUCCESS') {
+                    echo 'Pipeline executado com sucesso!'
+                    // slackSend channel: '#dev', message: "Build ${BUILD_NUMBER} sucedido!"
+                } else {
+                    echo 'Pipeline falhou!'
+                    // slackSend channel: '#dev', message: "Build ${BUILD_NUMBER} falhou!"
+                }
+            }
         }
     }
 }

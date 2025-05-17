@@ -12,6 +12,8 @@ pipeline {
         GITHUB_REPO = 'https://github.com/nadodev/Planejamento-Tarefas-e-Cursos.git'
         BRANCH = 'developer'
         SPRING_PROFILES_ACTIVE = 'test'
+        MYSQL_ROOT_PASSWORD = '1234'
+        MYSQL_DATABASE = 'tempomente'
     }
 
     stages {
@@ -50,7 +52,29 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Database') {
+            steps {
+                sh '''
+                    # Para e remove o container MySQL existente se houver
+                    docker stop mysql-planejador || true
+                    docker rm mysql-planejador || true
+                    
+                    # Inicia o container MySQL
+                    docker run -d \
+                        --name mysql-planejador \
+                        -e MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} \
+                        -e MYSQL_DATABASE=${MYSQL_DATABASE} \
+                        --network planejador-network \
+                        mysql:8.0
+                        
+                    # Aguarda o MySQL iniciar
+                    echo "Aguardando MySQL inicializar..."
+                    sleep 30
+                '''
+            }
+        }
+
+        stage('Deploy Application') {
             steps {
                 sh '''
                     # Para e remove o container existente se houver
@@ -110,7 +134,10 @@ pipeline {
         }
         failure {
             echo 'Pipeline falhou!'
-            sh "docker logs ${DOCKER_IMAGE} || true"
+            sh '''
+                docker logs ${DOCKER_IMAGE} || true
+                docker logs mysql-planejador || true
+            '''
         }
     }
 }

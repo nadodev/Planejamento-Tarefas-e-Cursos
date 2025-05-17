@@ -2,72 +2,108 @@ pipeline {
     agent {
         docker {
             image 'eclipse-temurin:21-jdk'
-            args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock'
-            reuseNode true
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
         }
     }
-    
+
     environment {
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
-        COMPOSE_PATH = "/usr/local/bin/docker-compose"
+        GITHUB_REPO = 'https://github.com/nadodev/Planejamento-Tarefas-e-Cursos.git'
+        BRANCH = 'developer'
     }
 
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                sh './mvnw clean package -DskipTests'
+                // Limpa workspace
+                cleanWs()
+                // Clone do repositório
+                git branch: env.BRANCH, url: env.GITHUB_REPO
             }
         }
-        
-        stage('Docker Build') {
+
+        stage('Build & Test') {
+            steps {
+                // Garante permissão de execução do Maven wrapper
+                sh 'chmod +x mvnw'
+                
+                // Compila e executa testes
+                sh './mvnw clean verify'
+            }
+            post {
+                always {
+                    // Publica resultados dos testes
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
             steps {
                 script {
+                    // Constrói a imagem Docker
                     docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
                 }
             }
         }
-        
+
         stage('Deploy') {
             steps {
-                sh '''
-                    ${COMPOSE_PATH} down || true
-                    ${COMPOSE_PATH} up -d --build
-                '''
+                script {
+                    // Para containers existentes e inicia novos
+                    sh '''
+                        docker-compose down || true
+                        docker-compose up -d --build
+                    '''
+                }
             }
         }
-        
-        stage('Verification') {
+
+        stage('Health Check') {
             steps {
                 script {
-                    // Aguarda inicialização
+                    // Aguarda a inicialização
                     sleep 30
-                    
-                    // Verifica status do container
-                    def status = sh(
-                        script: "${COMPOSE_PATH} ps | grep java-app-1 | awk '{print \$4}'",
+
+                    // Verifica se o container está rodando
+                    def containerStatus = sh(
+                        script: "docker ps --filter name=planejador-horario --format '{{.Status}}'",
                         returnStdout: true
                     ).trim()
-                    
-                    if (status != "Up") {
-                        error "Container não está rodando. Status: ${status}"
-                        sh 'docker logs java-app-1'
+
+                    if (!containerStatus.startsWith('Up')) {
+                        error "Container não está rodando. Status: ${containerStatus}"
                     }
-                    
-                    // Testa conexão
-                    def response = sh(
+
+                    // Tenta acessar a aplicação
+                    def healthCheck = sh(
                         script: 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000"',
                         returnStdout: true
                     ).trim()
-                    
-                    if (response != "200") {
-                        error "Aplicação não responde. HTTP Status: ${response}"
-                        sh 'docker logs java-app-1'
-                    } else {
-                        echo "SUCESSO: Aplicação respondendo na porta 8080!"
+
+                    if (healthCheck != "200") {
+                        error "Aplicação não está saudável. Status HTTP: ${healthCheck}"
                     }
+
+                    echo "Aplicação está rodando e saudável!"
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            // Limpa workspace
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline executado com sucesso!'
+        }
+        failure {
+            echo 'Pipeline falhou!'
+            // Coleta logs em caso de falha
+            sh 'docker logs planejador-horario || true'
         }
     }
 }

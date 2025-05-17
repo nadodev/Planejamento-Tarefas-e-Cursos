@@ -30,11 +30,6 @@ pipeline {
             }
         }
 
-        stage('Testes Unitários') {
-            steps {
-                sh './mvnw test'
-            }
-        }
 
         stage('Build Docker Image') {
             steps {

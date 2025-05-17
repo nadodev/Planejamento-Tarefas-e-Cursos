@@ -3,6 +3,8 @@ version: '3.8'
 services:
   app:
     build: .
+    ports:
+      - "9090:9090"  # Expor porta 9090 para acesso externo
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/tempomente?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&zeroDateTimeBehavior=convertToNull
       - SPRING_DATASOURCE_USERNAME=root
@@ -11,6 +13,10 @@ services:
       - db
     networks:
       - planejador-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.planejamento.rule=Host(`planejamento.leonardogeja.com.br`)"
+      - "traefik.http.services.planejamento.loadbalancer.server.port=9090"
 
   db:
     image: mysql:8.0
@@ -31,4 +37,4 @@ volumes:
 
 networks:
   planejador-network:
-    driver: bridge 
+    driver: bridge

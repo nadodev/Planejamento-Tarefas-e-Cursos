@@ -6,11 +6,14 @@ services:
     ports:
       - "9090:9090"  # Expor porta 9090 para acesso externo
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/tempomente?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&zeroDateTimeBehavior=convertToNull
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-planejador:3306/tempomente?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&zeroDateTimeBehavior=convertToNull
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=1234
+      - SERVER_PORT=9090
+      - JWT_SECRET=minhachavesecretaProducao123456789012345678901234567890
     depends_on:
-      - db
+      - mysql-planejador
     networks:
       - planejador-network
     labels:
@@ -18,8 +21,9 @@ services:
       - "traefik.http.routers.planejamento.rule=Host(`planejamento.leonardogeja.com.br`)"
       - "traefik.http.services.planejamento.loadbalancer.server.port=9090"
 
-  db:
+  mysql-planejador:
     image: mysql:8.0
+    container_name: mysql-planejador
     ports:
       - "3306:3306"
     environment:
@@ -31,6 +35,7 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - planejador-network
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
 volumes:
   mysql-data:

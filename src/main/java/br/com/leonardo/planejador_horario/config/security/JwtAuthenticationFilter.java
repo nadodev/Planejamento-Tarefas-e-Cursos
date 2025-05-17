@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
@@ -40,17 +41,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt)) {
-                if (tokenProvider.validateToken(jwt)) {
-                    String userEmail = tokenProvider.getUserEmailFromToken(jwt);
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+                try {
+                    if (tokenProvider.validateToken(jwt)) {
+                        String userEmail = tokenProvider.getUserEmailFromToken(jwt);
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                } else {
-                    handleAuthenticationError(response, "Token JWT inválido ou expirado", HttpStatus.UNAUTHORIZED);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                } catch (Exception e) {
+                    handleAuthenticationError(response, "Token inválido ou expirado", HttpStatus.UNAUTHORIZED);
                     return;
                 }
             }
@@ -71,6 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void handleAuthenticationError(HttpServletResponse response, String message, HttpStatus status) throws IOException {
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
         Map<String, Object> body = Map.of(
                 "timestamp", ZonedDateTime.now(),

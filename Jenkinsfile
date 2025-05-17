@@ -117,7 +117,7 @@ pipeline {
                     '''
 
                     // Verifica e instala Docker e Docker Compose
-                    sh '''
+                        sh '''
                         echo "Verificando Docker..."
                         docker --version || {
                             echo "Erro: Docker não está instalado ou não está acessível"
@@ -175,23 +175,23 @@ pipeline {
         stage('Wait for MySQL') {
             steps {
                 script {
-                    sh '''
+                        sh '''
                         echo "Esperando o MySQL iniciar..."
                         for i in {1..30}; do
                             if docker ps -qf "name=java-db" | grep -q .; then
                                 MYSQL_CONTAINER=$(docker ps -qf "name=java-db")
                                 if docker exec $MYSQL_CONTAINER mysqladmin ping -h"localhost" --silent &> /dev/null; then
                                     echo "MySQL está pronto!"
-                                    break
+                                        break
+                                    fi
                                 fi
-                            fi
-                            
-                            if [ $i -eq 30 ]; then
+                                
+                                if [ $i -eq 30 ]; then
                                 echo "Timeout esperando MySQL. Logs do container:"
                                 docker ps -a
                                 docker logs $(docker ps -qf "name=java-db") || true
-                                exit 1
-                            fi
+                                    exit 1
+                                fi
                             
                             echo "Aguardando banco... tentativa $i/30"
                             sleep 3
@@ -204,7 +204,7 @@ pipeline {
         stage('Wait for Application') {
             steps {
                 script {
-                    sh '''
+                        sh '''
                         echo "Verificando se a aplicação está respondendo..."
                         for i in {1..30}; do
                             if curl -s http://localhost:${APP_PORT}/actuator/health | grep -q "UP"; then
@@ -212,19 +212,19 @@ pipeline {
                                 exit 0
                             fi
                             echo "Aguardando aplicação inicializar... Tentativa $i/30"
-                            sleep 10
-                        done
-                        
-                        echo "Timeout aguardando aplicação inicializar"
-                        exit 1
-                    '''
+                                sleep 10
+                            done
+                            
+                            echo "Timeout aguardando aplicação inicializar"
+                            exit 1
+                        '''
                 }
             }
         }
 
         stage('Build & Test') {
             steps {
-                sh '''
+                        sh '''
                     echo "Ambiente Java:"
                     echo "JAVA_HOME: $JAVA_HOME"
                     java -version
@@ -279,11 +279,11 @@ pipeline {
             echo 'Pipeline executado com sucesso!'
         }
         failure {
-            echo 'Pipeline falhou!'
-            sh '''
+                echo 'Pipeline falhou!'
+                sh '''
                 echo "=== Status dos Containers ==="
-                docker ps -a
-                
+                    docker ps -a
+                    
                 echo "=== Logs do MySQL ==="
                 if docker ps -qf "name=java-db" | grep -q .; then
                     docker logs $(docker ps -qf "name=java-db")

@@ -1,14 +1,14 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = 'planejador-horario'
-        DOCKER_TAG = "v${BUILD_NUMBER}"
-        JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
+    tools {
+        jdk 'JDK 21' 
     }
 
-    tools {
-        jdk 'JDK 17'
+    environment {
+        JAVA_HOME = tool(name: 'JDK 21', type: 'jdk') // Resolve dinamicamente o path
+        DOCKER_IMAGE = 'planejador-horario'
+        DOCKER_TAG = "v${BUILD_NUMBER}"
     }
 
     stages {
@@ -41,12 +41,10 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                script {
-                    sh """
-                        docker-compose down
-                        docker-compose up -d
-                    """
-                }
+                sh '''
+                    docker-compose down
+                    docker-compose up -d
+                '''
             }
         }
     }
@@ -62,4 +60,4 @@ pipeline {
             echo 'Pipeline falhou!'
         }
     }
-} 
+}

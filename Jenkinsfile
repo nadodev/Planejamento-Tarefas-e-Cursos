@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
+        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'
     }
 
     tools {

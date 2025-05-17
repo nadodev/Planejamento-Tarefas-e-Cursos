@@ -26,7 +26,7 @@ pipeline {
                                 java -version
                                 JAVA_VERSION=$(java -version 2>&1 | head -n 1)
                                 echo "Versão completa: $JAVA_VERSION"
-                                if echo "$JAVA_VERSION" | grep -E "version \"21|version \"21\."; then
+                                if echo "$JAVA_VERSION" | grep -E "version.*21"; then
                                     echo "Java 21 detectado com sucesso"
                                     return 0
                                 else
@@ -45,7 +45,7 @@ pipeline {
                             apt-get update
                             apt-get install -y wget apt-transport-https gnupg
                             wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/trusted.gpg.d/adoptium.asc
-                            echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
+                            echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= \'/^VERSION_CODENAME/{print$2}\' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
                             apt-get update
                             apt-get install -y temurin-21-jdk
                             

@@ -2,6 +2,9 @@ package br.com.leonardo.planejador_horario.config.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,6 +15,7 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+    private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     @Value("${jwt.secret:defaultSecretKey123456789012345678901234567890}")
     private String jwtSecret;
@@ -55,20 +59,20 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token);
             return true;
         } catch (SignatureException ex) {
-            // Token com assinatura inválida
-            return false;
+            logger.error("Assinatura JWT inválida");
+            throw new JwtException("Assinatura do token inválida");
         } catch (MalformedJwtException ex) {
-            // Token mal formado
-            return false;
+            logger.error("Token JWT mal formado");
+            throw new JwtException("Token mal formado");
         } catch (ExpiredJwtException ex) {
-            // Token expirado
-            return false;
+            logger.error("Token JWT expirado");
+            throw new JwtException("Token expirado");
         } catch (UnsupportedJwtException ex) {
-            // Token não suportado
-            return false;
+            logger.error("Token JWT não suportado");
+            throw new JwtException("Token não suportado");
         } catch (IllegalArgumentException ex) {
-            // Token vazio ou nulo
-            return false;
+            logger.error("JWT claims string está vazia");
+            throw new JwtException("Token inválido");
         }
     }
 } 

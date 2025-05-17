@@ -5,6 +5,7 @@ import br.com.leonardo.planejador_horario.adapter.inbound.dto.TokenResponse;
 import br.com.leonardo.planejador_horario.config.security.JwtTokenProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -33,11 +34,61 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Realizar login")
+    @Operation(
+        summary = "Realizar login",
+        description = "Autentica o usuário com email e senha e retorna um token JWT para ser usado nas demais requisições."
+    )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Login realizado com sucesso",
-                content = @Content(schema = @Schema(implementation = TokenResponse.class))),
-        @ApiResponse(responseCode = "401", description = "Credenciais inválidas")
+        @ApiResponse(
+            responseCode = "200",
+            description = "Login realizado com sucesso",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = TokenResponse.class),
+                examples = @ExampleObject(
+                    value = """
+                    {
+                        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                        "tipo": "Bearer"
+                    }
+                    """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Credenciais inválidas",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                    {
+                        "timestamp": "2024-01-01T10:00:00Z",
+                        "status": 401,
+                        "error": "Credenciais inválidas",
+                        "message": "Email ou senha incorretos"
+                    }
+                    """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Usuário não encontrado",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                    {
+                        "timestamp": "2024-01-01T10:00:00Z",
+                        "status": 404,
+                        "error": "Usuário não encontrado",
+                        "message": "Usuário não encontrado com o email: exemplo@email.com"
+                    }
+                    """
+                )
+            )
+        )
     })
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(

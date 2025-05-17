@@ -129,14 +129,19 @@ pipeline {
                         echo "Iniciando MySQL..."
                         
                         sh """
-                            # Inicia o container MySQL
+                            # Inicia o container MySQL com configurações otimizadas
                             echo "Criando container MySQL..."
                             docker run -d \
                                 --name mysql-planejador \
                                 -e MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} \
                                 -e MYSQL_DATABASE=${MYSQL_DATABASE} \
+                                -e MYSQL_ROOT_HOST='%' \
                                 --network planejador-network \
-                                mysql:8.0
+                                -p 3306:3306 \
+                                mysql:8.0 \
+                                --character-set-server=utf8mb4 \
+                                --collation-server=utf8mb4_unicode_ci \
+                                --default-authentication-plugin=mysql_native_password
                                 
                             # Verifica se o container foi criado
                             if ! docker ps -a | grep -q mysql-planejador; then
@@ -156,6 +161,10 @@ pipeline {
                                 if docker exec mysql-planejador mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} --silent; then
                                     echo "MySQL está respondendo!"
                                     
+                                    # Configura permissões do MySQL
+                                    echo "Configurando permissões do MySQL..."
+                                    docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+                                    
                                     if docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${MYSQL_DATABASE}"; then
                                         echo "Banco de dados ${MYSQL_DATABASE} está acessível"
                                         break
@@ -171,6 +180,10 @@ pipeline {
                                 echo "MySQL ainda não está pronto. Aguardando..."
                                 sleep 10
                             done
+                            
+                            # Testa conexão do MySQL
+                            echo "Testando conexão MySQL de fora do container..."
+                            docker run --rm --network planejador-network mysql:8.0 mysql -h mysql-planejador -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;"
                         """
                     } catch (Exception e) {
                         echo "Erro ao iniciar MySQL: ${e.message}"
@@ -197,8 +210,10 @@ pipeline {
                                 -e SPRING_DATASOURCE_USERNAME=root \
                                 -e SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD} \
                                 -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
+                                -e SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQL8Dialect \
                                 -e LOGGING_LEVEL_ROOT=DEBUG \
                                 -e LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG \
+                                -e LOGGING_LEVEL_ORG_HIBERNATE=DEBUG \
                                 ${DOCKER_IMAGE}:${DOCKER_TAG}
                             
                             # Verifica se o container foi criado
@@ -219,6 +234,16 @@ pipeline {
                             echo "Verificando conectividade..."
                             docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador
                             docker exec ${DOCKER_IMAGE} nc -zv mysql-planejador 3306
+                            
+                            echo "Testando conexão MySQL da aplicação..."
+                            docker exec ${DOCKER_IMAGE} java -jar /app/target/planejador_horario-0.0.1-SNAPSHOT.jar \
+                                --spring.datasource.url=jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE} \
+                                --spring.datasource.username=root \
+                                --spring.datasource.password=${MYSQL_ROOT_PASSWORD} \
+                                --spring.main.web-application-type=none \
+                                --logging.level.root=DEBUG \
+                                --logging.level.org.hibernate=DEBUG \
+                                --spring.jpa.properties.hibernate.show_sql=true
                             
                             echo "Verificando status da aplicação..."
                             for i in \$(seq 1 12); do
@@ -245,6 +270,9 @@ pipeline {
                             
                             echo "=== Informações da Rede ==="
                             docker network inspect planejador-network
+                            
+                            echo "=== Teste de conexão MySQL ==="
+                            docker run --rm --network planejador-network mysql:8.0 mysql -h mysql-planejador -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;" || true
                         """
                         throw e
                     }
@@ -276,6 +304,9 @@ pipeline {
                     
                     echo "=== Logs Finais da Aplicação ==="
                     docker logs planejador-horario || echo "Container da aplicação não encontrado"
+                    
+                    echo "=== Teste Final de Conexão MySQL ==="
+                    docker run --rm --network planejador-network mysql:8.0 mysql -h mysql-planejador -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;" || echo "Não foi possível conectar ao MySQL"
                 '''
             }
         }

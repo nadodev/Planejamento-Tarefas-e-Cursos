@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'eclipse-temurin:21-jdk'
+            image 'cimg/openjdk:21.0'
             args '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
         }
     }
@@ -18,32 +18,26 @@ pipeline {
         stage('Setup') {
             steps {
                 sh '''
-                    # Instala dependências necessárias
-                    apt-get update
-                    apt-get install -y curl docker.io
+                    # Verifica se o Docker está funcionando
+                    docker info
                     
-                    # Instala Docker Compose
-                    curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                    chmod +x /usr/local/bin/docker-compose
+                    # Cria a rede se não existir
+                    docker network inspect planejador-network >/dev/null 2>&1 || \
+                    docker network create planejador-network
                 '''
             }
         }
 
         stage('Checkout') {
             steps {
-                // Limpa workspace
                 cleanWs()
-                // Clone do repositório
                 git branch: env.BRANCH, url: env.GITHUB_REPO
             }
         }
 
         stage('Build') {
             steps {
-                // Garante permissão de execução do Maven wrapper
                 sh 'chmod +x mvnw'
-                
-                // Compila e executa testes
                 sh './mvnw clean package -DskipTests'
             }
         }
@@ -51,8 +45,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Constrói a imagem Docker
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
         }
@@ -60,7 +53,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                    # Para containers existentes
+                    # Para e remove o container existente se houver
                     docker stop ${DOCKER_IMAGE} || true
                     docker rm ${DOCKER_IMAGE} || true
                     
@@ -78,26 +71,28 @@ pipeline {
             steps {
                 script {
                     // Aguarda a inicialização
-                    sleep 30
+                    sh 'sleep 30'
 
-                    // Verifica se o container está rodando
-                    def containerStatus = sh(
-                        script: "docker ps --filter name=${DOCKER_IMAGE} --format '{{.Status}}'",
+                    // Verifica status do container
+                    def status = sh(
+                        script: "docker ps -f name=${DOCKER_IMAGE} --format '{{.Status}}'",
                         returnStdout: true
                     ).trim()
 
-                    if (!containerStatus.startsWith('Up')) {
-                        error "Container não está rodando. Status: ${containerStatus}"
+                    if (!status.startsWith('Up')) {
+                        sh "docker logs ${DOCKER_IMAGE}"
+                        error "Container não está rodando. Status: ${status}"
                     }
 
-                    // Tenta acessar a aplicação
-                    def healthCheck = sh(
+                    // Verifica saúde da aplicação
+                    def health = sh(
                         script: 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000"',
                         returnStdout: true
                     ).trim()
 
-                    if (healthCheck != "200") {
-                        error "Aplicação não está saudável. Status HTTP: ${healthCheck}"
+                    if (health != "200") {
+                        sh "docker logs ${DOCKER_IMAGE}"
+                        error "Aplicação não está saudável. HTTP Status: ${health}"
                     }
 
                     echo "Aplicação está rodando e saudável!"
@@ -108,7 +103,6 @@ pipeline {
 
     post {
         always {
-            // Limpa workspace
             cleanWs()
         }
         success {
@@ -116,7 +110,6 @@ pipeline {
         }
         failure {
             echo 'Pipeline falhou!'
-            // Coleta logs em caso de falha
             sh "docker logs ${DOCKER_IMAGE} || true"
         }
     }

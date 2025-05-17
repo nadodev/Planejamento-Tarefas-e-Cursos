@@ -6,7 +6,7 @@ pipeline {
         DB_HOST = 'db'
         DB_PORT = '3306'
         DOCKER_COMPOSE_VERSION = '2.21.0'
-        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'
+        JAVA_HOME = '/usr/lib/jvm/temurin-21-jdk-amd64'
         PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
     }
 
@@ -18,63 +18,101 @@ pipeline {
                     sh '''
                         echo "Verificando/Instalando Java 21..."
                         
+                        # Função para verificar a versão do Java
+                        check_java_version() {
+                            echo "Verificando versão do Java..."
+                            if command -v java &> /dev/null; then
+                                echo "Comando java encontrado. Verificando versão:"
+                                java -version
+                                JAVA_VERSION=$(java -version 2>&1 | head -n 1)
+                                echo "Versão completa: $JAVA_VERSION"
+                                if echo "$JAVA_VERSION" | grep -E "version \"21|version \"21\."; then
+                                    echo "Java 21 detectado com sucesso"
+                                    return 0
+                                else
+                                    echo "Versão do Java não é 21"
+                                    return 1
+                                fi
+                            else
+                                echo "Comando java não encontrado"
+                                return 1
+                            fi
+                        }
+                        
                         # Função para instalar Java no Ubuntu/Debian
                         install_java_debian() {
-                            echo "Adicionando repositório para Java 21..."
+                            echo "Instalando Java 21 via Adoptium (Debian/Ubuntu)..."
                             apt-get update
-                            apt-get install -y wget apt-transport-https
-                            wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add -
+                            apt-get install -y wget apt-transport-https gnupg
+                            wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/trusted.gpg.d/adoptium.asc
                             echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
                             apt-get update
                             apt-get install -y temurin-21-jdk
+                            
+                            # Configura as alternativas do Java
+                            echo "Configurando alternativas do Java..."
+                            update-alternatives --install /usr/bin/java java /usr/lib/jvm/temurin-21-jdk-amd64/bin/java 2100
+                            update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/temurin-21-jdk-amd64/bin/javac 2100
                             update-alternatives --set java /usr/lib/jvm/temurin-21-jdk-amd64/bin/java
-                        }
-                        
-                        # Função para instalar Java no CentOS/RHEL
-                        install_java_rhel() {
-                            echo "Adicionando repositório para Java 21..."
-                            curl -L https://packages.adoptium.net/artifactory/api/rpm/rhel/openj9/9/x86_64/adoptium.repo -o /etc/yum.repos.d/adoptium.repo
-                            yum install -y temurin-21-jdk
+                            update-alternatives --set javac /usr/lib/jvm/temurin-21-jdk-amd64/bin/javac
+                            
+                            echo "Verificando instalação..."
+                            ls -la /usr/lib/jvm/temurin-21-jdk-amd64/bin/
+                            echo "JAVA_HOME atual: $JAVA_HOME"
+                            export PATH="/usr/lib/jvm/temurin-21-jdk-amd64/bin:$PATH"
                         }
                         
                         # Função para instalar Java manualmente
                         install_java_manual() {
                             echo "Instalando Java 21 manualmente..."
                             cd /tmp
-                            wget https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
+                            wget -q https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
                             tar xzf openjdk-21.0.2_linux-x64_bin.tar.gz
+                            rm -rf /usr/lib/jvm/temurin-21-jdk-amd64 || true
                             mkdir -p /usr/lib/jvm
-                            mv jdk-21.0.2 /usr/lib/jvm/java-21-openjdk-amd64
-                            update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-21-openjdk-amd64/bin/java 1
-                            update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java-21-openjdk-amd64/bin/javac 1
-                            echo "Java 21 instalado em /usr/lib/jvm/java-21-openjdk-amd64"
+                            mv jdk-21.0.2 /usr/lib/jvm/temurin-21-jdk-amd64
+                            
+                            echo "Configurando alternativas do Java..."
+                            update-alternatives --install /usr/bin/java java /usr/lib/jvm/temurin-21-jdk-amd64/bin/java 2100
+                            update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/temurin-21-jdk-amd64/bin/javac 2100
+                            update-alternatives --set java /usr/lib/jvm/temurin-21-jdk-amd64/bin/java
+                            update-alternatives --set javac /usr/lib/jvm/temurin-21-jdk-amd64/bin/javac
+                            
+                            export PATH="/usr/lib/jvm/temurin-21-jdk-amd64/bin:$PATH"
+                            export JAVA_HOME="/usr/lib/jvm/temurin-21-jdk-amd64"
                         }
                         
-                        # Verifica se Java 21 já está instalado
-                        if java -version 2>&1 | grep -q "version \\"21"; then
-                            echo "Java 21 já está instalado"
-                            java -version
+                        echo "Estado inicial do Java:"
+                        java -version || echo "Java não instalado inicialmente"
+                        
+                        if check_java_version; then
+                            echo "Java 21 já está instalado e configurado corretamente"
                         else
-                            echo "Instalando Java 21..."
-                            # Tenta diferentes métodos de instalação
+                            echo "Iniciando instalação do Java 21..."
                             if command -v apt-get &> /dev/null; then
                                 install_java_debian || install_java_manual
-                            elif command -v yum &> /dev/null; then
-                                install_java_rhel || install_java_manual
                             else
                                 install_java_manual
                             fi
                             
-                            # Verifica a instalação
-                            if ! java -version 2>&1 | grep -q "version \\"21"; then
-                                echo "Falha na instalação do Java 21"
+                            echo "Verificando instalação final..."
+                            if ! check_java_version; then
+                                echo "ERRO: Falha na instalação do Java 21"
+                                echo "PATH atual: $PATH"
+                                echo "JAVA_HOME atual: $JAVA_HOME"
+                                echo "Conteúdo de /usr/lib/jvm:"
+                                ls -la /usr/lib/jvm/
+                                echo "Alternativas do Java:"
+                                update-alternatives --display java
                                 exit 1
                             fi
                         fi
                         
-                        echo "Versão do Java instalada:"
+                        echo "Configuração do Java concluída:"
+                        echo "JAVA_HOME: $JAVA_HOME"
+                        echo "PATH: $PATH"
                         java -version
-                        echo "JAVA_HOME: ${JAVA_HOME}"
+                        javac -version
                     '''
 
                     // Verifica e instala Docker e Docker Compose

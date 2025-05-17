@@ -1,27 +1,38 @@
-package br.com.leonardo.planejador_horario.domain.model;
+package br.com.leonardo.planejador_horario.adapter.outbound.entity;
 
+import jakarta.persistence.*;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
-public class Compromisso {
+@Entity
+@Table(name = "compromissos")
+public class CompromissoEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String titulo;
-    private Usuario usuario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private UsuarioEntity usuario;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dia_da_semana", nullable = false)
     private DayOfWeek diaDaSemana;
+
+    @Column(name = "horario_inicio", nullable = false)
     private LocalTime horarioInicio;
+
+    @Column(name = "horario_fim", nullable = false)
     private LocalTime horarioFim;
+
+    @Column(nullable = false)
     private boolean recorrente;
 
-    public Compromisso(Long id, String titulo, Usuario usuario, DayOfWeek diaDaSemana, LocalTime horarioInicio, LocalTime horarioFim, boolean recorrente) {
-        this.id = id;
-        this.titulo = titulo;
-        this.usuario = usuario;
-        this.diaDaSemana = diaDaSemana;
-        this.horarioInicio = horarioInicio;
-        this.horarioFim = horarioFim;
-        this.recorrente = recorrente;
-    }
-
+    // Getters e Setters
 
     public Long getId() {
         return id;
@@ -39,11 +50,11 @@ public class Compromisso {
         this.titulo = titulo;
     }
 
-    public Usuario getUsuario() {
+    public UsuarioEntity getUsuario() {
         return usuario;
     }
 
-    public void setUsuario(Usuario usuario) {
+    public void setUsuario(UsuarioEntity usuario) {
         this.usuario = usuario;
     }
 
@@ -78,4 +89,7 @@ public class Compromisso {
     public void setRecorrente(boolean recorrente) {
         this.recorrente = recorrente;
     }
+
+
 }
+

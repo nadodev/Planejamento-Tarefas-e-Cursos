@@ -15,6 +15,20 @@ pipeline {
     }
 
     stages {
+        stage('Setup') {
+            steps {
+                sh '''
+                    # Instala dependências necessárias
+                    apt-get update
+                    apt-get install -y curl docker.io
+                    
+                    # Instala Docker Compose
+                    curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                    chmod +x /usr/local/bin/docker-compose
+                '''
+            }
+        }
+
         stage('Checkout') {
             steps {
                 // Limpa workspace
@@ -45,13 +59,18 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                script {
-                    // Para containers existentes e inicia novos
-                    sh '''
-                        docker-compose down || true
-                        docker-compose up -d --build
-                    '''
-                }
+                sh '''
+                    # Para containers existentes
+                    docker stop ${DOCKER_IMAGE} || true
+                    docker rm ${DOCKER_IMAGE} || true
+                    
+                    # Executa o novo container
+                    docker run -d \
+                        --name ${DOCKER_IMAGE} \
+                        -p 8080:8080 \
+                        --network planejador-network \
+                        ${DOCKER_IMAGE}:${DOCKER_TAG}
+                '''
             }
         }
 
@@ -63,7 +82,7 @@ pipeline {
 
                     // Verifica se o container está rodando
                     def containerStatus = sh(
-                        script: "docker ps --filter name=planejador-horario --format '{{.Status}}'",
+                        script: "docker ps --filter name=${DOCKER_IMAGE} --format '{{.Status}}'",
                         returnStdout: true
                     ).trim()
 
@@ -98,7 +117,7 @@ pipeline {
         failure {
             echo 'Pipeline falhou!'
             // Coleta logs em caso de falha
-            sh 'docker logs planejador-horario || true'
+            sh "docker logs ${DOCKER_IMAGE} || true"
         }
     }
 }

@@ -3,8 +3,6 @@ version: '3.8'
 services:
   app:
     build: .
-    ports:
-      - "9090:9090"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/tempomente?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&zeroDateTimeBehavior=convertToNull
       - SPRING_DATASOURCE_USERNAME=root

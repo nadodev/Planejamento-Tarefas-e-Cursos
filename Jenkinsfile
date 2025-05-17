@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'eclipse-temurin:21-jdk'
+            args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     environment {
         // Defina explicitamente o JAVA_HOME
@@ -18,32 +23,32 @@ pipeline {
         }
 
       stage('Build Maven') {
-    steps {
-        script {
-            // Força o uso do Java 21
-            def javaHome = '/usr/lib/jvm/java-21-openjdk-amd64'
-            
-            sh """
-                # Configuração definitiva do ambiente
-                unset JAVA_HOME
-                unset PATH
-                export JAVA_HOME=${javaHome}
-                export PATH="${javaHome}/bin:/usr/local/bin:/usr/bin:/bin"
+        steps {
+            script {
+                // Força o uso do Java 21
+                def javaHome = '/usr/lib/jvm/java-21-openjdk-amd64'
                 
-                # Verificações
-                echo "Java home: \$JAVA_HOME"
-                echo "Java version:"
-                ${javaHome}/bin/java -version
-                echo "Maven version:"
-                ./mvnw --version
-                
-                # Build
-                ./mvnw clean package -DskipTests
-            """
+                sh """
+                    # Configuração definitiva do ambiente
+                    unset JAVA_HOME
+                    unset PATH
+                    export JAVA_HOME=${javaHome}
+                    export PATH="${javaHome}/bin:/usr/local/bin:/usr/bin:/bin"
+                    
+                    # Verificações
+                    echo "Java home: \$JAVA_HOME"
+                    echo "Java version:"
+                    ${javaHome}/bin/java -version
+                    echo "Maven version:"
+                    ./mvnw --version
+                    
+                    # Build
+                    ./mvnw clean package -DskipTests
+                """
+            }
         }
     }
-}
-        stage('Debug Environment') {
+            stage('Debug Environment') {
             steps {
                 sh '''
                     echo "=== Verificando Ambiente ==="

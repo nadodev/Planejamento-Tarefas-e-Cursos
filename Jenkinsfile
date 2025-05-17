@@ -128,20 +128,7 @@ pipeline {
                     try {
                         echo "Iniciando MySQL..."
                         
-                        sh """
-                            # Inicia o container MySQL com configurações otimizadas
-                            echo "Criando container MySQL..."
-                            docker run -d \
-                                --name mysql-planejador \
-                                -e MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} \
-                                -e MYSQL_DATABASE=${MYSQL_DATABASE} \
-                                -e MYSQL_ROOT_HOST='%' \
-                                --network planejador-network \
-                                -p 3306:3306 \
-                                mysql:8.0 \
-                                --character-set-server=utf8mb4 \
-                                --collation-server=utf8mb4_unicode_ci \
-                                --default-authentication-plugin=mysql_native_password
+                                                sh """                            # Inicia o container MySQL com configurações otimizadas                            echo "Criando container MySQL..."                            docker run -d \                                --name mysql-planejador \                                -e MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} \                                -e MYSQL_DATABASE=${MYSQL_DATABASE} \                                -e MYSQL_ROOT_HOST='%' \                                -e MYSQL_USER=app_user \                                -e MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD} \                                --network planejador-network \                                -p 3306:3306 \                                mysql:8.0 \                                --character-set-server=utf8mb4 \                                --collation-server=utf8mb4_unicode_ci \                                --default-authentication-plugin=mysql_native_password \                                --bind-address=0.0.0.0 \                                --max_connections=1000
                                 
                             # Verifica se o container foi criado
                             if ! docker ps -a | grep -q mysql-planejador; then
@@ -232,8 +219,26 @@ pipeline {
                             docker logs ${DOCKER_IMAGE}
                             
                             echo "Verificando conectividade..."
+                            
+                            # Teste de DNS
+                            echo "Teste de resolução DNS..."
+                            docker exec ${DOCKER_IMAGE} dig mysql-planejador
+                            
+                            # Teste de ping
+                            echo "Teste de ping..."
                             docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador
+                            
+                            # Teste de porta MySQL
+                            echo "Teste de conexão MySQL..."
                             docker exec ${DOCKER_IMAGE} nc -zv mysql-planejador 3306
+                            
+                            # Teste de conexão MySQL via cliente
+                            echo "Teste de cliente MySQL..."
+                            docker exec mysql-planejador mysql -h localhost -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT VERSION();"
+                            
+                            # Verifica status da rede
+                            echo "Verificando configuração de rede..."
+                            docker network inspect planejador-network
                             
                             echo "Testando conexão MySQL da aplicação..."
                             docker exec ${DOCKER_IMAGE} java -jar /app/target/planejador_horario-0.0.1-SNAPSHOT.jar \

@@ -49,3 +49,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD /app/healthcheck.sh
 
 ENTRYPOINT ["java", "-jar", "/app/target/planejador_horario-0.0.1-SNAPSHOT.jar"]
+
+
+#   docker-compose down
+#   docker-compose build
+#   docker-compose up --build

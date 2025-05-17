@@ -5,14 +5,26 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 
+@Schema(description = "Representação de um curso no sistema")
 public class CursoDTO {
 
+    @Schema(description = "ID do curso", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
-    @Schema(description = "Nome do curso", example = "Java Básico")
+
+    @Schema(description = "Nome do curso", example = "Curso de Java Spring Boot", required = true)
     private String nome;
+
+    @Schema(description = "Carga horária do curso em horas", example = "40", minimum = "1")
     private int cargaHoraria;
+
+    @Schema(description = "Nível de prioridade do curso (1-5)", example = "3", minimum = "1", maximum = "5")
     private int prioridade;
+
+    @Schema(description = "Data limite para conclusão do curso", example = "2024-12-31")
     private LocalDate prazoFinal;
+
+    @Schema(description = "ID do usuário responsável pelo curso", example = "1", required = true)
+    private Long usuario;
 
     public static CursoDTO fromEntity(CursoEntity entity) {
         CursoDTO dto = new CursoDTO();
@@ -23,9 +35,6 @@ public class CursoDTO {
         dto.setPrazoFinal(entity.getPrazoFinal());
         return dto;
     }
-
-    private Long usuario;
-
 
     public Long getId() {
         return id;

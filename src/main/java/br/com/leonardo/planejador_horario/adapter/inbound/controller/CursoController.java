@@ -1,6 +1,5 @@
 package br.com.leonardo.planejador_horario.adapter.inbound.controller;
 
-
 import br.com.leonardo.planejador_horario.adapter.inbound.dto.CursoDTO;
 import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
 import br.com.leonardo.planejador_horario.domain.exception.UsuarioNaoEncontradoException;
@@ -10,6 +9,7 @@ import br.com.leonardo.planejador_horario.usecase.curso.CriarCursoUseCase;
 import br.com.leonardo.planejador_horario.usecase.curso.DeletaCursoUseCase;
 import br.com.leonardo.planejador_horario.usecase.curso.ListarCursosUseCase;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@Tag(name = "Cursos", description = "Operações relacionadas a cursos")
+@Tag(name = "Cursos", description = "API para gerenciamento de cursos")
 @RequestMapping("/api/cursos")
 public class CursoController {
 
@@ -44,19 +44,12 @@ public class CursoController {
     }
 
     @PostMapping
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Results are ok", content = { @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = ResponseEntity.class)) }),
-            @ApiResponse(responseCode = "400", description = "Invalid request",
-                    content = @Content),
-            @ApiResponse(responseCode = "404", description = "resource not found",
-                    content = @Content) })
-    @Operation(summary = "Springdoc open api sample API")
-    public ResponseEntity<?> criarCurso(@Valid @RequestBody CursoDTO request) {
+    public ResponseEntity<?> criarCurso(
+        @Valid @RequestBody CursoDTO request
+    ) {
         try {
-            Curso cursoCriado = criarCursoUseCase.criar(request); // delega tudo
+            Curso cursoCriado = criarCursoUseCase.criar(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(cursoCriado);
-
         } catch (UsuarioNaoEncontradoException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", e.getMessage()));
@@ -72,21 +65,26 @@ public class CursoController {
                 .stream()
                 .map(CursoDTO::fromEntity)
                 .toList();
-
         return ResponseEntity.ok(cursos);
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<List<CursoDTO>> listarCursos(@PathVariable Long usuarioId) {
+    public ResponseEntity<List<CursoDTO>> listarCursos(
+        @Parameter(description = "ID do usuário", required = true, example = "1")
+        @PathVariable Long usuarioId
+    ) {
         List<CursoDTO> cursos = listarCursosUseCase.listarPorUsuario(usuarioId).stream()
                 .map(CursoDTO::fromEntity)
                 .toList();
-
         return ResponseEntity.ok(cursos);
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deletar(@PathVariable Long id) {
+    public ResponseEntity<Void> deletar(
+        @Parameter(description = "ID do curso", required = true, example = "1")
+        @PathVariable Long id
+    ) {
         deletarCursoUseCase.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -9,21 +9,6 @@ pipeline {
         DOCKER_TAG = "v${BUILD_NUMBER}"
     }
 
-    stages {
-        stage('Verificar Ambiente') {
-            steps {
-                sh '''
-                    echo "=== Ambiente de Build ==="
-                    echo "JAVA_HOME: $JAVA_HOME"
-                    echo "PATH: $PATH"
-                    echo "Versão do Java:"
-                    ${JAVA_HOME} -version
-                    echo "Versão do Maven:"
-                    ./mvnw --version || echo "Maven ainda não configurado"
-                '''
-            }
-        }
-
         stage('Checkout') {
             steps {
                 checkout scm

@@ -14,34 +14,13 @@ pipeline {
     }
 
     stages {
-        stage('Setup Environment') {
-            steps {
-                sh '''
-                    # Instala dependências ausentes
-                    apt-get update && apt-get install -y git docker-compose
-                    
-                    # Verifica instalações
-                    git --version
-                    ${COMPOSE_PATH} --version
-                '''
-            }
-        }
-        
         stage('Build') {
             steps {
-                sh '''
-                    echo "=== Ambiente de Build ==="
-                    echo "Java version:"
-                    java -version
-                    echo "Maven version:"
-                    ./mvnw --version
-                    
-                    ./mvnw clean package -DskipTests
-                '''
+                sh './mvnw clean package -DskipTests'
             }
         }
         
-        stage('Build Docker Image') {
+        stage('Docker Build') {
             steps {
                 script {
                     docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
@@ -54,22 +33,40 @@ pipeline {
                 sh '''
                     ${COMPOSE_PATH} down || true
                     ${COMPOSE_PATH} up -d --build
-                    
-                    # Verifica status dos containers
-                    sleep 10
-                    ${COMPOSE_PATH} ps
                 '''
             }
         }
-    }
-    
-    post {
-        always {
-            cleanWs()
-            script {
-                // Notificação opcional (descomente se configurado)
-                // slackSend(color: currentBuild.result == 'SUCCESS' ? 'good' : 'danger',
-                //           message: "Build ${env.JOB_NAME} #${env.BUILD_NUMBER}: ${currentBuild.result}")
+        
+        stage('Verification') {
+            steps {
+                script {
+                    // Aguarda inicialização
+                    sleep 30
+                    
+                    // Verifica status do container
+                    def status = sh(
+                        script: "${COMPOSE_PATH} ps | grep java-app-1 | awk '{print \$4}'",
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (status != "Up") {
+                        error "Container não está rodando. Status: ${status}"
+                        sh 'docker logs java-app-1'
+                    }
+                    
+                    // Testa conexão
+                    def response = sh(
+                        script: 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000"',
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (response != "200") {
+                        error "Aplicação não responde. HTTP Status: ${response}"
+                        sh 'docker logs java-app-1'
+                    } else {
+                        echo "SUCESSO: Aplicação respondendo na porta 8080!"
+                    }
+                }
             }
         }
     }

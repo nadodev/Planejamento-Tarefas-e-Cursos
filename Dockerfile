@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     dnsutils \
     net-tools \
     curl \
-    netcat \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia arquivos de build primeiro
@@ -28,7 +28,7 @@ COPY src/main/resources/application.properties /app/target/classes/application.p
 # Cria script de healthcheck
 RUN echo '#!/bin/sh\n\
 echo "Verificando MySQL..."\n\
-if nc -z mysql-planejador 3306; then\n\
+if nc -z -v mysql-planejador 3306; then\n\
     echo "MySQL está acessível"\n\
 else\n\
     echo "MySQL não está acessível"\n\

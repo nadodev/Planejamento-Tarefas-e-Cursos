@@ -81,16 +81,26 @@ pipeline {
             steps {
                 script {
                     try {
+                        echo "Iniciando build da imagem Docker..."
+                        
                         sh """
-                            echo "Construindo imagem Docker..."
-                            docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                            # Mostra conteúdo do Dockerfile
+                            echo "=== Dockerfile ===="
+                            cat Dockerfile
                             
-                            echo "Verificando imagem construída:"
+                            echo "\\n=== Iniciando build ==="
+                            DOCKER_BUILDKIT=0 docker build --progress=plain -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                            
+                            echo "\\n=== Imagem construída ==="
                             docker images | grep ${DOCKER_IMAGE}
+                            
+                            echo "\\n=== Testando ferramentas instaladas ==="
+                            docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} which ping nc dig curl
                         """
                     } catch (Exception e) {
                         echo "Erro ao construir imagem Docker: ${e.message}"
-                        throw e
+                        currentBuild.result = 'FAILURE'
+                        error "Falha ao construir imagem Docker"
                     }
                 }
             }

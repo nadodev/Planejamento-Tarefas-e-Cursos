@@ -14,6 +14,8 @@ pipeline {
         SPRING_PROFILES_ACTIVE = 'test'
         MYSQL_ROOT_PASSWORD = '1234'
         MYSQL_DATABASE = 'tempomente'
+        DB_HOST = 'mysql-planejador'
+        DB_PORT = '3306'
     }
 
     stages {
@@ -107,6 +109,9 @@ pipeline {
                         --name ${DOCKER_IMAGE} \
                         -p 8080:8080 \
                         --network planejador-network \
+                        -e SPRING_DATASOURCE_URL="jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true" \
+                        -e SPRING_DATASOURCE_USERNAME=root \
+                        -e SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD} \
                         ${DOCKER_IMAGE}:${DOCKER_TAG}
                         
                     echo "Container da aplicação iniciado. Aguardando inicialização..."
@@ -149,7 +154,17 @@ pipeline {
                         sh "docker logs ${DOCKER_IMAGE}"
                         
                         echo "Verificando conectividade entre containers..."
-                        sh "docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador || true"
+                        sh '''
+                            docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador || true
+                            
+                            echo "Testando conexão MySQL diretamente..."
+                            docker exec ${DOCKER_IMAGE} java -jar /app/target/planejador_horario-0.0.1-SNAPSHOT.jar \
+                                --spring.datasource.url=jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE} \
+                                --spring.datasource.username=root \
+                                --spring.datasource.password=${MYSQL_ROOT_PASSWORD} \
+                                --spring.main.web-application-type=none \
+                                --logging.level.root=DEBUG
+                        '''
                         
                         error "Aplicação não está saudável. HTTP Status: ${health}"
                     }
@@ -181,6 +196,12 @@ pipeline {
                 
                 echo "=== Informações da Rede ==="
                 docker network inspect planejador-network
+                
+                echo "=== Teste de DNS ==="
+                docker exec ${DOCKER_IMAGE} nslookup mysql-planejador || true
+                
+                echo "=== Configuração de Rede do Container ==="
+                docker exec ${DOCKER_IMAGE} ip addr show || true
             '''
         }
     }

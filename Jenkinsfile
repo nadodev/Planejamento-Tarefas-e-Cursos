@@ -4,6 +4,11 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
+        JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
+    }
+
+    tools {
+        jdk 'JDK 17'
     }
 
     stages {

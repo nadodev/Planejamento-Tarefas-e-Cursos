@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         // Defina explicitamente o JAVA_HOME
-        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64/bin/java' // Ajuste o caminho conforme sua instalação
-        PATH = "${JAVA_HOME}/bin:${env.PATH}"
+        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'  
+        PATH = "${JAVA_HOME}/bin:${PATH}"
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
     }

@@ -17,7 +17,7 @@ pipeline {
                     echo "JAVA_HOME: $JAVA_HOME"
                     echo "PATH: $PATH"
                     echo "Versão do Java:"
-                    ${JAVA_HOME}/bin/java -version
+                    ${JAVA_HOME} -version
                     echo "Versão do Maven:"
                     ./mvnw --version || echo "Maven ainda não configurado"
                 '''

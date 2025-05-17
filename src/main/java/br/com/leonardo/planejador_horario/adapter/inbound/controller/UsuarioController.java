@@ -46,7 +46,7 @@ public class UsuarioController {
                 content = @Content(schema = @Schema(implementation = UsuarioEntity.class))),
         @ApiResponse(responseCode = "400", description = "Dados inválidos ou email já cadastrado")
     })
-    @PostMapping
+    @PostMapping("/registrar")
     public ResponseEntity<UsuarioEntity> criarUsuario(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do usuário a ser criado", required = true)
             @RequestBody @Valid UsuarioDTO usuarioDTO) {

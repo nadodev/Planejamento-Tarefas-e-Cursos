@@ -89,13 +89,29 @@ pipeline {
                             cat Dockerfile
                             
                             echo "\\n=== Iniciando build ==="
-                            DOCKER_BUILDKIT=0 docker build --progress=plain -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                            # Usando modo legado do Docker build para melhor compatibilidade
+                            docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                             
                             echo "\\n=== Imagem construída ==="
                             docker images | grep ${DOCKER_IMAGE}
                             
                             echo "\\n=== Testando ferramentas instaladas ==="
-                            docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} which ping nc dig curl
+                            # Testa cada ferramenta individualmente para melhor diagnóstico
+                            echo "Verificando ping..."
+                            docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} which ping
+                            
+                            echo "Verificando netcat..."
+                            docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} which nc
+                            
+                            echo "Verificando dig..."
+                            docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} which dig
+                            
+                            echo "Verificando curl..."
+                            docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} which curl
+                            
+                            echo "\\n=== Verificando conteúdo do container ==="
+                            docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} ls -la /app/target/
+                            docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} ls -la /app/healthcheck.sh
                         """
                     } catch (Exception e) {
                         echo "Erro ao construir imagem Docker: ${e.message}"

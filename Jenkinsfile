@@ -69,7 +69,28 @@ pipeline {
                         
                     # Aguarda o MySQL iniciar
                     echo "Aguardando MySQL inicializar..."
-                    sleep 30
+                    
+                    # Loop para verificar se o MySQL está pronto
+                    for i in $(seq 1 30); do
+                        if docker exec mysql-planejador mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} --silent; then
+                            echo "MySQL está pronto!"
+                            break
+                        fi
+                        echo "Tentativa $i: MySQL ainda não está pronto..."
+                        sleep 10
+                    done
+                    
+                    # Verifica se o banco foi criado
+                    echo "Verificando banco de dados..."
+                    docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SHOW DATABASES;" | grep ${MYSQL_DATABASE}
+                    
+                    # Mostra informações do container
+                    echo "Status do container MySQL:"
+                    docker ps -f name=mysql-planejador
+                    
+                    # Mostra logs do MySQL
+                    echo "Logs do MySQL:"
+                    docker logs mysql-planejador
                 '''
             }
         }
@@ -87,6 +108,12 @@ pipeline {
                         -p 8080:8080 \
                         --network planejador-network \
                         ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        
+                    echo "Container da aplicação iniciado. Aguardando inicialização..."
+                    sleep 10
+                    
+                    echo "Logs iniciais da aplicação:"
+                    docker logs ${DOCKER_IMAGE}
                 '''
             }
         }
@@ -115,7 +142,15 @@ pipeline {
                     ).trim()
 
                     if (health != "200") {
+                        echo "Verificando logs do MySQL..."
+                        sh "docker logs mysql-planejador"
+                        
+                        echo "Verificando logs da aplicação..."
                         sh "docker logs ${DOCKER_IMAGE}"
+                        
+                        echo "Verificando conectividade entre containers..."
+                        sh "docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador || true"
+                        
                         error "Aplicação não está saudável. HTTP Status: ${health}"
                     }
 
@@ -135,8 +170,17 @@ pipeline {
         failure {
             echo 'Pipeline falhou!'
             sh '''
-                docker logs ${DOCKER_IMAGE} || true
+                echo "=== Logs do MySQL ==="
                 docker logs mysql-planejador || true
+                
+                echo "=== Logs da Aplicação ==="
+                docker logs ${DOCKER_IMAGE} || true
+                
+                echo "=== Status dos Containers ==="
+                docker ps -a
+                
+                echo "=== Informações da Rede ==="
+                docker network inspect planejador-network
             '''
         }
     }

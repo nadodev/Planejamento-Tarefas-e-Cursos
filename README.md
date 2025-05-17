@@ -1,180 +1,159 @@
-# Planejador de Horários
+# Planejador de Horário
 
-Sistema de gerenciamento de cursos e planejamento de horários de estudo desenvolvido com Spring Boot.
+Sistema para planejamento e gerenciamento de horários de estudo, desenvolvido com Spring Boot seguindo os princípios da Arquitetura Hexagonal (Ports and Adapters).
 
-## 🚀 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - Java 21
-- Spring Boot 3.1.5
+- Spring Boot 3.x
+- Spring Security + JWT
 - Spring Data JPA
-- MySQL 8.0 (Produção)
-- H2 Database (Testes)
-- JUnit 5
-- Mockito
-- Maven
+- H2 Database (para desenvolvimento)
+- Swagger/OpenAPI para documentação
+- JUnit 5 e Mockito para testes
 
-## 📋 Pré-requisitos
+## Arquitetura
 
-- Java 21
-- MySQL 8.0
-- Maven 3.8+
-- Git
+O projeto segue a Arquitetura Hexagonal (também conhecida como Ports and Adapters), com a seguinte estrutura:
 
-## 🔧 Configuração do Ambiente
+```
+src/main/java/br/com/leonardo/planejador_horario/
+├── adapter/
+│   ├── inbound/
+│   │   ├── controller/    # Controllers REST
+│   │   ├── dto/          # DTOs para request/response
+│   │   └── exception/    # Handlers de exceção
+│   └── outbound/
+│       ├── entity/       # Entidades JPA
+│       ├── mapper/       # Mapeadores entre domínio e entidades
+│       └── persistence/  # Implementações de repositório
+├── application/
+│   └── port/
+│       └── out/         # Interfaces de repositório
+├── config/
+│   └── security/       # Configurações de segurança e JWT
+├── domain/
+│   ├── exception/      # Exceções de domínio
+│   ├── model/         # Modelos de domínio
+│   └── validator/     # Validadores
+└── usecase/           # Casos de uso da aplicação
+    ├── auth/          # Casos de uso de autenticação
+    └── impl/          # Implementações dos casos de uso
+```
 
-### 1. Clone o Repositório
+## Funcionalidades
+
+### Módulo de Autenticação
+
+- Registro de usuário
+- Login com JWT
+- Proteção de rotas com token Bearer
+
+### Módulo de Usuários
+
+- Criar usuário
+- Listar usuários
+- Buscar usuário por ID
+- Atualizar usuário
+- Deletar usuário
+
+### Módulo de Cursos
+
+- Criar curso
+- Listar todos os cursos
+- Listar cursos por usuário
+- Deletar curso
+
+## Como Executar
+
+1. Clone o repositório:
 ```bash
-git clone [URL_DO_REPOSITORIO]
+git clone https://github.com/seu-usuario/planejador_horario.git
 cd planejador_horario
 ```
 
-### 2. Configure o Banco de Dados
-
-#### Produção (MySQL)
-```properties
-# src/main/resources/application.properties
-spring.datasource.url=jdbc:mysql://localhost:3306/tempomente
-spring.datasource.username=seu_usuario
-spring.datasource.password=sua_senha
-```
-
-#### Testes (H2)
-```properties
-# src/test/resources/application-test.properties
-# Já configurado para usar H2 em memória
-```
-
-### 3. Execute os Testes
+2. Execute a aplicação:
 ```bash
-# Todos os testes
-mvn test
-
-# Apenas testes unitários
-mvn test -Dtest=CursoControllerTest
-
-# Apenas testes de integração
-mvn test -Dtest=CursoControllerIntegrationTest
+./mvnw spring-boot:run
 ```
 
-### 4. Execute a Aplicação
-```bash
-mvn spring-boot:run
+3. Acesse a documentação da API:
+```
+http://localhost:8080/swagger-ui.html
 ```
 
-## 🗂️ Estrutura do Projeto
+## Testando a API
 
-```
-src/
-├── main/
-│   ├── java/
-│   │   └── br.com.leonardo.planejador_horario/
-│   │       ├── adapter/
-│   │       │   ├── inbound/
-│   │       │   │   ├── controller/
-│   │       │   │   └── dto/
-│   │       │   └── outbound/
-│   │       │       ├── entity/
-│   │       │       ├── mapper/
-│   │       │       └── persistence/
-│   │       ├── application/
-│   │       │   └── port/
-│   │       ├── domain/
-│   │       │   ├── exception/
-│   │       │   ├── model/
-│   │       │   └── validator/
-│   │       └── usecase/
-│   └── resources/
-│       └── application.properties
-└── test/
-    ├── java/
-    │   └── br.com.leonardo.planejador_horario/
-    │       └── adapter/
-    │           └── inbound/
-    │               └── controller/
-    └── resources/
-        ├── application-test.properties
-        └── schema.sql
+### Usando o Swagger
+
+Acesse a documentação interativa em `http://localhost:8080/swagger-ui.html`. A interface do Swagger permite:
+
+1. Visualizar todos os endpoints disponíveis
+2. Testar as requisições diretamente pelo navegador
+3. Ver os modelos de dados e exemplos de requisição/resposta
+4. Autenticar-se usando o botão "Authorize" com o token JWT
+
+## Exemplos de Requisições
+
+### Registrar Usuário
+
+```json
+POST /api/usuarios
+{
+    "nome": "João da Silva",
+    "email": "joao@email.com",
+    "senha": "senha123"
+}
 ```
 
-## 📝 Documentação da API
+### Login
 
-### Swagger UI
-- **URL**: http://localhost:8080/swagger-ui.html
-- **Recursos**: Documentação interativa completa
-- **Teste**: Endpoints testáveis via interface
+```json
+POST /api/auth/login
+{
+    "email": "joao@email.com",
+    "senha": "senha123"
+}
+```
 
-### Endpoints Principais
+### Criar Curso (Autenticado)
 
-#### Cursos
-```http
+```json
 POST /api/cursos
-GET /api/cursos
-GET /api/cursos/usuario/{usuarioId}
-DELETE /api/cursos/{id}
+{
+    "nome": "Curso de Spring Boot",
+    "descricao": "Curso completo de Spring Boot",
+    "cargaHoraria": 40,
+    "prioridade": 3,
+    "prazoFinal": "2024-12-31"
+}
 ```
 
-## 🧪 Testes
+## Segurança
 
-O projeto possui uma cobertura abrangente de testes, incluindo:
+O sistema utiliza autenticação JWT (JSON Web Token) com as seguintes características:
 
-### Testes Unitários
-- Focados no comportamento isolado dos componentes
-- Utilizam mocks para simular dependências
-- Rápidos e não requerem infraestrutura
+- Tokens com expiração de 24 horas
+- Autenticação via header `Authorization: Bearer {token}`
+- Endpoints públicos:
+  - `/api/auth/login`
+  - `/api/usuarios` (POST - registro)
+  - `/v3/api-docs/**`
+  - `/swagger-ui/**`
+- Demais endpoints requerem autenticação
 
-### Testes de Integração
-- Validam o fluxo completo da aplicação
-- Utilizam banco H2 em memória
-- Testam a integração entre componentes
+## Testes
 
-[Documentação Completa dos Testes](docs/testes.md)
+O projeto inclui testes unitários e de integração. Para executar os testes:
 
-## 📊 Modelo de Dados
-
-```mermaid
-erDiagram
-    USUARIO ||--o{ CURSO : possui
-    CURSO ||--o{ PLANO_ESTUDO : tem
-    USUARIO {
-        Long id PK
-        String nome
-        String email
-        String senhaHash
-    }
-    CURSO {
-        Long id PK
-        String nome
-        int cargaHoraria
-        int prioridade
-        Date prazoFinal
-        Long usuarioId FK
-    }
-    PLANO_ESTUDO {
-        Long id PK
-        Long cursoId FK
-        DateTime horarioInicio
-        DateTime horarioFim
-        String status
-    }
+```bash
+./mvnw test
 ```
 
-## 🛠️ Próximos Passos
-
-- [ ] Implementação do módulo de usuários
-- [ ] Autenticação e autorização
-- [ ] Geração automática de planos de estudo
-- [ ] Interface web com React
-- [ ] Notificações por email
-- [ ] Relatórios de progresso
-
-## 👥 Contribuição
+## Contribuindo
 
 1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Faça commit das suas alterações (`git commit -am 'Adiciona nova feature'`)
+4. Faça push para a branch (`git push origin feature/nova-feature`)
+5. Crie um Pull Request

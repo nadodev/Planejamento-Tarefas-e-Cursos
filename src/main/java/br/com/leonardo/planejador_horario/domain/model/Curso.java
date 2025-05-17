@@ -1,29 +1,18 @@
 package br.com.leonardo.planejador_horario.domain.model;
 
-
-import br.com.leonardo.planejador_horario.adapter.outbound.entity.UsuarioEntity;
-
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 
 public class Curso {
     private Long id;
     private String nome;
-    private int cargaHoraria;
-    private int prioridade;
+    private String descricao;
+    private Integer cargaHoraria;
+    private Integer prioridade;
     private LocalDate prazoFinal;
-    private UsuarioEntity usuario;
-
-    public Curso(Long id, String nome, int cargaHoraria, int prioridade, LocalDate prazoFinal, UsuarioEntity usuario) {
-        this.id = id;
-        this.nome = nome;
-        this.cargaHoraria = cargaHoraria;
-        this.prioridade = prioridade;
-        this.prazoFinal = prazoFinal;
-        this.usuario = usuario;
-    }
-
-    public Curso() {
-    }
+    private Long usuarioId;
+    private LocalDateTime dataCriacao;
+    private LocalDateTime dataAtualizacao;
 
     public Long getId() {
         return id;
@@ -41,19 +30,27 @@ public class Curso {
         this.nome = nome;
     }
 
-    public int getCargaHoraria() {
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public Integer getCargaHoraria() {
         return cargaHoraria;
     }
 
-    public void setCargaHoraria(int cargaHoraria) {
+    public void setCargaHoraria(Integer cargaHoraria) {
         this.cargaHoraria = cargaHoraria;
     }
 
-    public int getPrioridade() {
+    public Integer getPrioridade() {
         return prioridade;
     }
 
-    public void setPrioridade(int prioridade) {
+    public void setPrioridade(Integer prioridade) {
         this.prioridade = prioridade;
     }
 
@@ -65,11 +62,27 @@ public class Curso {
         this.prazoFinal = prazoFinal;
     }
 
-    public UsuarioEntity getUsuario() {
-        return usuario;
+    public Long getUsuarioId() {
+        return usuarioId;
     }
 
-    public void setUsuario(UsuarioEntity usuario) {
-        this.usuario = usuario;
+    public void setUsuarioId(Long usuarioId) {
+        this.usuarioId = usuarioId;
+    }
+
+    public LocalDateTime getDataCriacao() {
+        return dataCriacao;
+    }
+
+    public void setDataCriacao(LocalDateTime dataCriacao) {
+        this.dataCriacao = dataCriacao;
+    }
+
+    public LocalDateTime getDataAtualizacao() {
+        return dataAtualizacao;
+    }
+
+    public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
+        this.dataAtualizacao = dataAtualizacao;
     }
 }

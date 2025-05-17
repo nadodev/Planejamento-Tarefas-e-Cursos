@@ -48,7 +48,7 @@ public class CursoController {
         @Valid @RequestBody CursoDTO request
     ) {
         try {
-            Curso cursoCriado = criarCursoUseCase.criar(request);
+            CursoDTO cursoCriado = criarCursoUseCase.criar(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(cursoCriado);
         } catch (UsuarioNaoEncontradoException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

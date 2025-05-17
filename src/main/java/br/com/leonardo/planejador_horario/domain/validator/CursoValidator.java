@@ -2,8 +2,6 @@ package br.com.leonardo.planejador_horario.domain.validator;
 
 import br.com.leonardo.planejador_horario.adapter.inbound.dto.CursoDTO;
 import br.com.leonardo.planejador_horario.domain.exception.CursoException;
-import br.com.leonardo.planejador_horario.domain.exception.CursoNomeObrigatorioException;
-import br.com.leonardo.planejador_horario.domain.exception.CursoResponsavelObrigatorioException;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Component;
 
@@ -15,13 +13,12 @@ public class CursoValidator {
             throw new CursoException("Curso não pode ser nulo");
         }
 
-        if (curso.getNome() == null || curso.getNome().isBlank()) {
-            throw new CursoNomeObrigatorioException();
+        if (curso.getNome() == null || curso.getNome().trim().isEmpty()) {
+            throw new CursoException("Nome do curso é obrigatório");
         }
 
-        if (curso.getUsuario() == null) {
-            throw new CursoResponsavelObrigatorioException();
+        if (curso.getUsuarioId() == null) {
+            throw new CursoException("ID do usuário é obrigatório");
         }
-
     }
 }

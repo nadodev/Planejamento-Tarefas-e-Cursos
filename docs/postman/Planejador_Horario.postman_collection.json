@@ -1,0 +1,171 @@
+{
+	"info": {
+		"_postman_id": "3f5b9b1a-5b1a-4b1a-8b1a-5b1a4b1a8b1a",
+		"name": "Planejador Horário",
+		"description": "Coleção de requisições para testar a API do Planejador de Horário",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Usuários",
+			"item": [
+				{
+					"name": "Criar Usuário",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"João da Silva\",\n    \"email\": \"joao@email.com\",\n    \"senha\": \"senha123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/usuarios",
+							"host": ["{{base_url}}"],
+							"path": ["api", "usuarios"]
+						},
+						"description": "Cria um novo usuário no sistema"
+					}
+				},
+				{
+					"name": "Listar Usuários",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/usuarios",
+							"host": ["{{base_url}}"],
+							"path": ["api", "usuarios"]
+						},
+						"description": "Lista todos os usuários cadastrados"
+					}
+				},
+				{
+					"name": "Buscar Usuário por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/usuarios/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "usuarios", "1"]
+						},
+						"description": "Busca um usuário específico pelo ID"
+					}
+				},
+				{
+					"name": "Atualizar Usuário",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"João da Silva Atualizado\",\n    \"email\": \"joao.novo@email.com\",\n    \"senha\": \"novaSenha123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/usuarios/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "usuarios", "1"]
+						},
+						"description": "Atualiza os dados de um usuário existente"
+					}
+				},
+				{
+					"name": "Deletar Usuário",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/usuarios/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "usuarios", "1"]
+						},
+						"description": "Remove um usuário do sistema"
+					}
+				}
+			]
+		},
+		{
+			"name": "Cursos",
+			"item": [
+				{
+					"name": "Criar Curso",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"Curso de Spring Boot\",\n    \"cargaHoraria\": 40,\n    \"prioridade\": 3,\n    \"prazoFinal\": \"2024-12-31\",\n    \"usuario\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/cursos",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cursos"]
+						},
+						"description": "Cria um novo curso no sistema"
+					}
+				},
+				{
+					"name": "Listar Cursos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/cursos",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cursos"]
+						},
+						"description": "Lista todos os cursos cadastrados"
+					}
+				},
+				{
+					"name": "Listar Cursos por Usuário",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/cursos/usuario/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cursos", "usuario", "1"]
+						},
+						"description": "Lista todos os cursos de um usuário específico"
+					}
+				},
+				{
+					"name": "Deletar Curso",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/cursos/delete/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cursos", "delete", "1"]
+						},
+						"description": "Remove um curso do sistema"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+} 

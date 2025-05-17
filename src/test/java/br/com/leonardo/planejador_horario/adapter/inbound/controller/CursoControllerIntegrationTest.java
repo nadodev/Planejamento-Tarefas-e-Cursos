@@ -63,7 +63,7 @@ class CursoControllerIntegrationTest {
         cursoDTO.setCargaHoraria(40);
         cursoDTO.setPrioridade(3);
         cursoDTO.setPrazoFinal(LocalDate.now().plusMonths(1));
-        cursoDTO.setUsuario(usuario.getId());
+        cursoDTO.setUsuarioId(usuario.getId());
     }
 
     @Test
@@ -84,7 +84,7 @@ class CursoControllerIntegrationTest {
     @DisplayName("Deve retornar erro ao criar curso com usuário inexistente")
     void deveRetornarErroAoCriarCursoComUsuarioInexistente() throws Exception {
         // Arrange
-        cursoDTO.setUsuario(999L);
+        cursoDTO.setUsuarioId(999L);
 
         // Act & Assert
         mockMvc.perform(post("/api/cursos")

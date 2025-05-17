@@ -1,40 +1,36 @@
 package br.com.leonardo.planejador_horario.adapter.outbound.mapper;
 
 import br.com.leonardo.planejador_horario.adapter.outbound.entity.CursoEntity;
+import br.com.leonardo.planejador_horario.adapter.outbound.entity.UsuarioEntity;
 import br.com.leonardo.planejador_horario.domain.model.Curso;
-import org.springframework.stereotype.Component;
 
-@Component
 public class CursoMapper {
 
-    private final UsuarioMapper usuarioMapper;
-
-    public CursoMapper(UsuarioMapper usuarioMapper) {
-        this.usuarioMapper = usuarioMapper;
-    }
-
-    public CursoEntity toEntity(Curso domain) {
+    public static CursoEntity toEntity(Curso curso, UsuarioEntity usuario) {
         CursoEntity entity = new CursoEntity();
-        entity.setId(domain.getId());
-        entity.setNome(domain.getNome());
-        entity.setCargaHoraria(domain.getCargaHoraria());
-        entity.setPrioridade(domain.getPrioridade());
-        entity.setPrazoFinal(domain.getPrazoFinal());
-
-        if (domain.getUsuario() != null) {
-            entity.setUsuario(usuarioMapper.toEntity(domain.getUsuario()));
-        }
+        entity.setId(curso.getId());
+        entity.setNome(curso.getNome());
+        entity.setDescricao(curso.getDescricao());
+        entity.setCargaHoraria(curso.getCargaHoraria());
+        entity.setPrioridade(curso.getPrioridade());
+        entity.setPrazoFinal(curso.getPrazoFinal());
+        entity.setUsuario(usuario);
+        entity.setDataCriacao(curso.getDataCriacao());
+        entity.setDataAtualizacao(curso.getDataAtualizacao());
         return entity;
     }
 
-    public Curso toDomain(CursoEntity entity) {
-        return new Curso(
-                entity.getId(),
-                entity.getNome(),
-                entity.getCargaHoraria(),
-                entity.getPrioridade(),
-                entity.getPrazoFinal(),
-                entity.getUsuario()
-        );
+    public static Curso toDomain(CursoEntity entity) {
+        Curso curso = new Curso();
+        curso.setId(entity.getId());
+        curso.setNome(entity.getNome());
+        curso.setDescricao(entity.getDescricao());
+        curso.setCargaHoraria(entity.getCargaHoraria());
+        curso.setPrioridade(entity.getPrioridade());
+        curso.setPrazoFinal(entity.getPrazoFinal());
+        curso.setUsuarioId(entity.getUsuario().getId());
+        curso.setDataCriacao(entity.getDataCriacao());
+        curso.setDataAtualizacao(entity.getDataAtualizacao());
+        return curso;
     }
 }

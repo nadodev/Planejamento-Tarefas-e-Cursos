@@ -1,10 +1,14 @@
 package br.com.leonardo.planejador_horario.domain.model;
 
+import java.time.LocalDateTime;
+
 public class Usuario {
     private Long id;
     private String nome;
     private String email;
     private String senhaHash;
+    private LocalDateTime dataCriacao;
+    private LocalDateTime dataAtualizacao;
 
     public Usuario(Long id, String nome, String email, String senhaHash) {
         this.id = id;
@@ -46,5 +50,21 @@ public class Usuario {
 
     public void setSenhaHash(String senhaHash) {
         this.senhaHash = senhaHash;
+    }
+
+    public LocalDateTime getDataCriacao() {
+        return dataCriacao;
+    }
+
+    public void setDataCriacao(LocalDateTime dataCriacao) {
+        this.dataCriacao = dataCriacao;
+    }
+
+    public LocalDateTime getDataAtualizacao() {
+        return dataAtualizacao;
+    }
+
+    public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
+        this.dataAtualizacao = dataAtualizacao;
     }
 }

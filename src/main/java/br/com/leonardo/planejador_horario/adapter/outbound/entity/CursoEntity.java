@@ -1,10 +1,7 @@
 package br.com.leonardo.planejador_horario.adapter.outbound.entity;
 
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 
 @Entity
@@ -15,31 +12,40 @@ public class CursoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String nome;
 
-    private int cargaHoraria;
+    @Column(length = 1000)
+    private String descricao;
 
-    private int prioridade;
+    @Column(name = "carga_horaria", nullable = false)
+    private Integer cargaHoraria;
 
+    @Column(nullable = false)
+    private Integer prioridade;
+
+    @Column(name = "prazo_final", nullable = false)
     private LocalDate prazoFinal;
 
-    public CursoEntity() {
-    }
-
-    public CursoEntity(Long id, String nome, int cargaHoraria, int prioridade, LocalDate prazoFinal, UsuarioEntity usuario) {
-        this.id = id;
-        this.nome = nome;
-        this.cargaHoraria = cargaHoraria;
-        this.prioridade = prioridade;
-        this.prazoFinal = prazoFinal;
-        this.usuario = usuario;
-    }
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id")
-    @JsonIgnore
+    @JoinColumn(name = "usuario_id", nullable = false)
     private UsuarioEntity usuario;
 
+    @Column(name = "data_criacao", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime dataCriacao;
+
+    @Column(name = "data_atualizacao", columnDefinition = "TIMESTAMP NULL DEFAULT NULL")
+    private LocalDateTime dataAtualizacao;
+
+    @PrePersist
+    protected void onCreate() {
+        dataCriacao = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dataAtualizacao = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;
@@ -57,19 +63,27 @@ public class CursoEntity {
         this.nome = nome;
     }
 
-    public int getCargaHoraria() {
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    public Integer getCargaHoraria() {
         return cargaHoraria;
     }
 
-    public void setCargaHoraria(int cargaHoraria) {
+    public void setCargaHoraria(Integer cargaHoraria) {
         this.cargaHoraria = cargaHoraria;
     }
 
-    public int getPrioridade() {
+    public Integer getPrioridade() {
         return prioridade;
     }
 
-    public void setPrioridade(int prioridade) {
+    public void setPrioridade(Integer prioridade) {
         this.prioridade = prioridade;
     }
 
@@ -89,5 +103,20 @@ public class CursoEntity {
         this.usuario = usuario;
     }
 
+    public LocalDateTime getDataCriacao() {
+        return dataCriacao;
+    }
+
+    public void setDataCriacao(LocalDateTime dataCriacao) {
+        this.dataCriacao = dataCriacao;
+    }
+
+    public LocalDateTime getDataAtualizacao() {
+        return dataAtualizacao;
+    }
+
+    public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
+        this.dataAtualizacao = dataAtualizacao;
+    }
 }
 

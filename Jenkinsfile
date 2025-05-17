@@ -8,7 +8,7 @@ pipeline {
     }
     
     environment {
-        DOCKER_IMAGE = 'meu-app-java'
+        DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
     }
 

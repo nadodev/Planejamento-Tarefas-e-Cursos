@@ -25,6 +25,10 @@ pipeline {
                     # Verifica se o Docker está funcionando
                     docker info
                     
+                    # Remove containers antigos se existirem
+                    docker rm -f $(docker ps -aq -f name=planejador-horario) || true
+                    docker rm -f $(docker ps -aq -f name=mysql-planejador) || true
+                    
                     # Cria a rede se não existir
                     docker network inspect planejador-network >/dev/null 2>&1 || \
                     docker network create planejador-network
@@ -57,10 +61,6 @@ pipeline {
         stage('Deploy Database') {
             steps {
                 sh '''
-                    # Para e remove o container MySQL existente se houver
-                    docker stop mysql-planejador || true
-                    docker rm mysql-planejador || true
-                    
                     # Inicia o container MySQL
                     docker run -d \
                         --name mysql-planejador \
@@ -69,30 +69,29 @@ pipeline {
                         --network planejador-network \
                         mysql:8.0
                         
-                    # Aguarda o MySQL iniciar
                     echo "Aguardando MySQL inicializar..."
                     
                     # Loop para verificar se o MySQL está pronto
                     for i in $(seq 1 30); do
                         if docker exec mysql-planejador mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} --silent; then
                             echo "MySQL está pronto!"
-                            break
+                            
+                            # Verifica se o banco foi criado
+                            if docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${MYSQL_DATABASE}"; then
+                                echo "Banco de dados ${MYSQL_DATABASE} está acessível"
+                                break
+                            fi
                         fi
+                        
+                        if [ $i -eq 30 ]; then
+                            echo "Timeout aguardando MySQL"
+                            docker logs mysql-planejador
+                            exit 1
+                        fi
+                        
                         echo "Tentativa $i: MySQL ainda não está pronto..."
                         sleep 10
                     done
-                    
-                    # Verifica se o banco foi criado
-                    echo "Verificando banco de dados..."
-                    docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SHOW DATABASES;" | grep ${MYSQL_DATABASE}
-                    
-                    # Mostra informações do container
-                    echo "Status do container MySQL:"
-                    docker ps -f name=mysql-planejador
-                    
-                    # Mostra logs do MySQL
-                    echo "Logs do MySQL:"
-                    docker logs mysql-planejador
                 '''
             }
         }
@@ -100,10 +99,6 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 sh '''
-                    # Para e remove o container existente se houver
-                    docker stop ${DOCKER_IMAGE} || true
-                    docker rm ${DOCKER_IMAGE} || true
-                    
                     # Executa o novo container
                     docker run -d \
                         --name ${DOCKER_IMAGE} \
@@ -112,13 +107,19 @@ pipeline {
                         -e SPRING_DATASOURCE_URL="jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true" \
                         -e SPRING_DATASOURCE_USERNAME=root \
                         -e SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD} \
+                        -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
+                        -e LOGGING_LEVEL_ROOT=DEBUG \
+                        -e LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG \
                         ${DOCKER_IMAGE}:${DOCKER_TAG}
                         
                     echo "Container da aplicação iniciado. Aguardando inicialização..."
-                    sleep 10
                     
-                    echo "Logs iniciais da aplicação:"
+                    # Aguarda e verifica os logs
+                    sleep 10
                     docker logs ${DOCKER_IMAGE}
+                    
+                    # Executa healthcheck
+                    docker exec ${DOCKER_IMAGE} /app/healthcheck.sh
                 '''
             }
         }
@@ -126,50 +127,46 @@ pipeline {
         stage('Health Check') {
             steps {
                 script {
-                    // Aguarda a inicialização
-                    sh 'sleep 30'
-
-                    // Verifica status do container
-                    def status = sh(
-                        script: "docker ps -f name=${DOCKER_IMAGE} --format '{{.Status}}'",
-                        returnStdout: true
-                    ).trim()
-
-                    if (!status.startsWith('Up')) {
-                        sh "docker logs ${DOCKER_IMAGE}"
-                        error "Container não está rodando. Status: ${status}"
-                    }
-
-                    // Verifica saúde da aplicação
-                    def health = sh(
-                        script: 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000"',
-                        returnStdout: true
-                    ).trim()
-
-                    if (health != "200") {
-                        echo "Verificando logs do MySQL..."
-                        sh "docker logs mysql-planejador"
+                    sh '''
+                        # Verifica conectividade com MySQL
+                        echo "Verificando conectividade com MySQL..."
+                        docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador
                         
-                        echo "Verificando logs da aplicação..."
-                        sh "docker logs ${DOCKER_IMAGE}"
+                        echo "Verificando porta do MySQL..."
+                        docker exec ${DOCKER_IMAGE} nc -zv mysql-planejador 3306
                         
-                        echo "Verificando conectividade entre containers..."
-                        sh '''
-                            docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador || true
+                        echo "Verificando resolução DNS..."
+                        docker exec ${DOCKER_IMAGE} dig mysql-planejador
+                        
+                        # Aguarda a aplicação inicializar
+                        for i in $(seq 1 12); do
+                            echo "Tentativa $i de verificar saúde da aplicação..."
                             
-                            echo "Testando conexão MySQL diretamente..."
-                            docker exec ${DOCKER_IMAGE} java -jar /app/target/planejador_horario-0.0.1-SNAPSHOT.jar \
-                                --spring.datasource.url=jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE} \
-                                --spring.datasource.username=root \
-                                --spring.datasource.password=${MYSQL_ROOT_PASSWORD} \
-                                --spring.main.web-application-type=none \
-                                --logging.level.root=DEBUG
-                        '''
-                        
-                        error "Aplicação não está saudável. HTTP Status: ${health}"
-                    }
-
-                    echo "Aplicação está rodando e saudável!"
+                            if curl -s http://localhost:8080/actuator/health | grep -q "UP"; then
+                                echo "Aplicação está saudável!"
+                                exit 0
+                            fi
+                            
+                            echo "Aguardando 10 segundos..."
+                            sleep 10
+                            
+                            if [ $i -eq 12 ]; then
+                                echo "=== Logs da Aplicação ==="
+                                docker logs ${DOCKER_IMAGE}
+                                
+                                echo "=== Logs do MySQL ==="
+                                docker logs mysql-planejador
+                                
+                                echo "=== Status dos Containers ==="
+                                docker ps -a
+                                
+                                echo "=== Informações da Rede ==="
+                                docker network inspect planejador-network
+                                
+                                exit 1
+                            fi
+                        done
+                    '''
                 }
             }
         }
@@ -196,12 +193,6 @@ pipeline {
                 
                 echo "=== Informações da Rede ==="
                 docker network inspect planejador-network
-                
-                echo "=== Teste de DNS ==="
-                docker exec ${DOCKER_IMAGE} nslookup mysql-planejador || true
-                
-                echo "=== Configuração de Rede do Container ==="
-                docker exec ${DOCKER_IMAGE} ip addr show || true
             '''
         }
     }

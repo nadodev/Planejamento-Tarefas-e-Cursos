@@ -43,7 +43,7 @@ exit 0' > /app/healthcheck.sh && chmod +x /app/healthcheck.sh
 # Verifica se o JAR foi criado corretamente
 RUN ls -la target/planejador_horario-0.0.1-SNAPSHOT.jar
 
-EXPOSE 8080
+EXPOSE 9090
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD /app/healthcheck.sh

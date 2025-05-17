@@ -10,7 +10,6 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'planejador-horario'
         DOCKER_TAG = "v${BUILD_NUMBER}"
-        // Configura caminho alternativo para docker-compose
         COMPOSE_PATH = "/usr/local/bin/docker-compose"
     }
 
@@ -18,14 +17,19 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 sh '''
-                    # Instala docker-compose se não existir
+                    # Instala docker-compose se necessário
                     if ! command -v docker-compose &> /dev/null; then
                         echo "Instalando docker-compose..."
                         curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
                         -o ${COMPOSE_PATH}
                         chmod +x ${COMPOSE_PATH}
                     fi
-                    ${COMPOSE_PATH} --version
+                    
+                    # Verifica e libera a porta 3306 se estiver em uso
+                    if docker ps --format '{{.Ports}}' | grep -q '3306/tcp'; then
+                        echo "Parando containers MySQL existentes..."
+                        docker stop $(docker ps -q --filter "publish=3306") || true
+                    fi
                 '''
             }
         }
@@ -55,7 +59,16 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
+                    # Para containers existentes e remove
                     ${COMPOSE_PATH} down || true
+                    
+                    # Verifica se a porta 3306 está livre
+                    while netstat -tuln | grep -q ':3306'; do
+                        echo "Porta 3306 em uso, aguardando liberação..."
+                        sleep 5
+                    done
+                    
+                    # Inicia os containers
                     ${COMPOSE_PATH} up -d --build
                 '''
             }
@@ -68,13 +81,9 @@ pipeline {
         }
         success {
             echo 'Pipeline executado com sucesso!'
-            // Comente a linha abaixo se não tiver o plugin Slack instalado
-            // slackSend(color: 'good', message: "Build ${DOCKER_IMAGE}:${DOCKER_TAG} sucedida")
         }
         failure {
             echo 'Pipeline falhou! Verifique os logs.'
-            // Comente a linha abaixo se não tiver o plugin Slack instalado
-            // slackSend(color: 'danger', message: "Build ${JOB_NAME} falhou")
         }
     }
 }

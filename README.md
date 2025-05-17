@@ -79,14 +79,14 @@ cd planejador_horario
 
 3. Acesse a documentação da API:
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:9090/swagger-ui.html
 ```
 
 ## Testando a API
 
 ### Usando o Swagger
 
-Acesse a documentação interativa em `http://localhost:8080/swagger-ui.html`. A interface do Swagger permite:
+Acesse a documentação interativa em `http://localhost:9090/swagger-ui.html`. A interface do Swagger permite:
 
 1. Visualizar todos os endpoints disponíveis
 2. Testar as requisições diretamente pelo navegador

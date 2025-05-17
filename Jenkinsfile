@@ -5,6 +5,7 @@ pipeline {
         COMPOSE_FILE = 'docker-compose.yml'
         DB_HOST = 'db'
         DB_PORT = '3306'
+        APP_PORT = '9090'
         DOCKER_COMPOSE_VERSION = '2.21.0'
         JAVA_HOME = '/usr/lib/jvm/temurin-21-jdk-amd64'
         PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
@@ -195,6 +196,27 @@ pipeline {
                             echo "Aguardando banco... tentativa $i/30"
                             sleep 3
                         done
+                    '''
+                }
+            }
+        }
+
+        stage('Wait for Application') {
+            steps {
+                script {
+                    sh '''
+                        echo "Verificando se a aplicação está respondendo..."
+                        for i in {1..30}; do
+                            if curl -s http://localhost:${APP_PORT}/actuator/health | grep -q "UP"; then
+                                echo "Aplicação está saudável!"
+                                exit 0
+                            fi
+                            echo "Aguardando aplicação inicializar... Tentativa $i/30"
+                            sleep 10
+                        done
+                        
+                        echo "Timeout aguardando aplicação inicializar"
+                        exit 1
                     '''
                 }
             }

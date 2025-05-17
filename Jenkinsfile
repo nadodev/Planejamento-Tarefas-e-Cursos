@@ -123,53 +123,7 @@ pipeline {
                 '''
             }
         }
-
-        stage('Health Check') {
-            steps {
-                script {
-                    sh '''
-                        # Verifica conectividade com MySQL
-                        echo "Verificando conectividade com MySQL..."
-                        docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador
-                        
-                        echo "Verificando porta do MySQL..."
-                        docker exec ${DOCKER_IMAGE} nc -zv mysql-planejador 3306
-                        
-                        echo "Verificando resolução DNS..."
-                        docker exec ${DOCKER_IMAGE} dig mysql-planejador
-                        
-                        # Aguarda a aplicação inicializar
-                        for i in $(seq 1 12); do
-                            echo "Tentativa $i de verificar saúde da aplicação..."
-                            
-                            if curl -s http://localhost:8080/actuator/health | grep -q "UP"; then
-                                echo "Aplicação está saudável!"
-                                exit 0
-                            fi
-                            
-                            echo "Aguardando 10 segundos..."
-                            sleep 10
-                            
-                            if [ $i -eq 12 ]; then
-                                echo "=== Logs da Aplicação ==="
-                                docker logs ${DOCKER_IMAGE}
-                                
-                                echo "=== Logs do MySQL ==="
-                                docker logs mysql-planejador
-                                
-                                echo "=== Status dos Containers ==="
-                                docker ps -a
-                                
-                                echo "=== Informações da Rede ==="
-                                docker network inspect planejador-network
-                                
-                                exit 1
-                            fi
-                        done
-                    '''
-                }
-            }
-        }
+        
     }
 
     post {

@@ -146,49 +146,49 @@ pipeline {
                                 --default-authentication-plugin=mysql_native_password \
                                 --bind-address=0.0.0.0 \
                                 --max_connections=1000
-                        '''
-                        
-                        # Verifica se o container foi criado
-                        if ! docker ps -a | grep -q mysql-planejador; then
-                            echo "Falha ao criar container MySQL"
-                            exit 1
-                        fi
-                        
-                        echo "Container MySQL criado. Status:"
-                        docker ps -a | grep mysql-planejador
-                        
-                        echo "Aguardando MySQL inicializar..."
-                        
-                        # Loop para verificar se o MySQL está pronto
-                        for i in \$(seq 1 30); do
-                            echo "Tentativa \$i: Verificando MySQL..."
-                            
-                            if docker exec mysql-planejador mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} --silent; then
-                                echo "MySQL está respondendo!"
-                                
-                                # Configura permissões do MySQL
-                                echo "Configurando permissões do MySQL..."
-                                docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
-                                
-                                if docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${MYSQL_DATABASE}"; then
-                                    echo "Banco de dados ${MYSQL_DATABASE} está acessível"
-                                    break
-                                fi
-                            fi
-                            
-                            if [ \$i -eq 30 ]; then
-                                echo "Timeout aguardando MySQL. Logs:"
-                                docker logs mysql-planejador
+
+                            # Verifica se o container foi criado
+                            if ! docker ps -a | grep -q mysql-planejador; then
+                                echo "Falha ao criar container MySQL"
                                 exit 1
                             fi
                             
-                            echo "MySQL ainda não está pronto. Aguardando..."
-                            sleep 10
-                        done
-                        
-                        # Testa conexão do MySQL
-                        echo "Testando conexão MySQL de fora do container..."
-                        docker run --rm --network planejador-network mysql:8.0 mysql -h mysql-planejador -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;"
+                            echo "Container MySQL criado. Status:"
+                            docker ps -a | grep mysql-planejador
+                            
+                            echo "Aguardando MySQL inicializar..."
+                            
+                            # Loop para verificar se o MySQL está pronto
+                            for i in $(seq 1 30); do
+                                echo "Tentativa $i: Verificando MySQL..."
+                                
+                                if docker exec mysql-planejador mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} --silent; then
+                                    echo "MySQL está respondendo!"
+                                    
+                                    # Configura permissões do MySQL
+                                    echo "Configurando permissões do MySQL..."
+                                    docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+                                    
+                                    if docker exec mysql-planejador mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "USE ${MYSQL_DATABASE}"; then
+                                        echo "Banco de dados ${MYSQL_DATABASE} está acessível"
+                                        break
+                                    fi
+                                fi
+                                
+                                if [ $i -eq 30 ]; then
+                                    echo "Timeout aguardando MySQL. Logs:"
+                                    docker logs mysql-planejador
+                                    exit 1
+                                fi
+                                
+                                echo "MySQL ainda não está pronto. Aguardando..."
+                                sleep 10
+                            done
+                            
+                            # Testa conexão do MySQL
+                            echo "Testando conexão MySQL de fora do container..."
+                            docker run --rm --network planejador-network mysql:8.0 mysql -h mysql-planejador -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;"
+                        '''
                     } catch (Exception e) {
                         echo "Erro ao iniciar MySQL: ${e.message}"
                         sh 'docker logs mysql-planejador || true'
@@ -204,7 +204,7 @@ pipeline {
                     try {
                         echo "Iniciando aplicação..."
                         
-                        sh """
+                        sh '''
                             echo "Criando container da aplicação..."
                             docker run -d \
                                 --name ${DOCKER_IMAGE} \
@@ -219,7 +219,7 @@ pipeline {
                                 -e LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG \
                                 -e LOGGING_LEVEL_ORG_HIBERNATE=DEBUG \
                                 ${DOCKER_IMAGE}:${DOCKER_TAG}
-                            
+
                             # Verifica se o container foi criado
                             if ! docker ps -a | grep -q ${DOCKER_IMAGE}; then
                                 echo "Falha ao criar container da aplicação"
@@ -237,27 +237,25 @@ pipeline {
                             
                             echo "Verificando conectividade..."
                             
-                            sh '''
-                                # Teste de DNS
-                                echo "Teste de resolução DNS..."
-                                docker exec ${DOCKER_IMAGE} dig mysql-planejador
-                                
-                                # Teste de ping
-                                echo "Teste de ping..."
-                                docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador
-                                
-                                # Teste de porta MySQL
-                                echo "Teste de conexão MySQL..."
-                                docker exec ${DOCKER_IMAGE} nc -zv mysql-planejador 3306
-                                
-                                # Teste de conexão MySQL via cliente
-                                echo "Teste de cliente MySQL..."
-                                docker exec mysql-planejador mysql -h localhost -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT VERSION();"
-                                
-                                # Verifica status da rede
-                                echo "Verificando configuração de rede..."
-                                docker network inspect planejador-network
-                            '''
+                            # Teste de DNS
+                            echo "Teste de resolução DNS..."
+                            docker exec ${DOCKER_IMAGE} dig mysql-planejador
+                            
+                            # Teste de ping
+                            echo "Teste de ping..."
+                            docker exec ${DOCKER_IMAGE} ping -c 3 mysql-planejador
+                            
+                            # Teste de porta MySQL
+                            echo "Teste de conexão MySQL..."
+                            docker exec ${DOCKER_IMAGE} nc -zv mysql-planejador 3306
+                            
+                            # Teste de conexão MySQL via cliente
+                            echo "Teste de cliente MySQL..."
+                            docker exec mysql-planejador mysql -h localhost -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT VERSION();"
+                            
+                            # Verifica status da rede
+                            echo "Verificando configuração de rede..."
+                            docker network inspect planejador-network
                             
                             echo "Testando conexão MySQL da aplicação..."
                             docker exec ${DOCKER_IMAGE} java -jar /app/target/planejador_horario-0.0.1-SNAPSHOT.jar \
@@ -270,22 +268,22 @@ pipeline {
                                 --spring.jpa.properties.hibernate.show_sql=true
                             
                             echo "Verificando status da aplicação..."
-                            for i in \$(seq 1 12); do
+                            for i in $(seq 1 12); do
                                 if curl -s http://localhost:8080/actuator/health | grep -q "UP"; then
                                     echo "Aplicação está saudável!"
                                     exit 0
                                 fi
-                                echo "Aguardando aplicação inicializar... Tentativa \$i"
+                                echo "Aguardando aplicação inicializar... Tentativa $i"
                                 sleep 10
                             done
                             
                             echo "Timeout aguardando aplicação inicializar"
                             docker logs ${DOCKER_IMAGE}
                             exit 1
-                        """
+                        '''
                     } catch (Exception e) {
                         echo "Erro ao iniciar aplicação: ${e.message}"
-                        sh """
+                        sh '''
                             echo "=== Logs da Aplicação ==="
                             docker logs ${DOCKER_IMAGE} || true
                             
@@ -297,7 +295,7 @@ pipeline {
                             
                             echo "=== Teste de conexão MySQL ==="
                             docker run --rm --network planejador-network mysql:8.0 mysql -h mysql-planejador -u root -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;" || true
-                        """
+                        '''
                         throw e
                     }
                 }

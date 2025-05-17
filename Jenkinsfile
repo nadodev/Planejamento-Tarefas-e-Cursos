@@ -19,14 +19,25 @@ pipeline {
 
         stage('Build Maven') {
             steps {
-                sh 'chmod +x mvnw'
                 sh '''
+                    # Definir variáveis de ambiente corretamente
                     export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
                     export PATH="$JAVA_HOME/bin:$PATH"
+                    
+                    # Forçar atualização do alternatives
+                    sudo update-alternatives --set java $JAVA_HOME/bin/java
+                    sudo update-alternatives --set javac $JAVA_HOME/bin/javac
+                    
+                    # Verificações
+                    echo "Java home: $JAVA_HOME"
                     echo "Java version:"
-                    java -version
+                    $JAVA_HOME/bin/java -version
+                    echo "Which java:"
+                    which java
                     echo "Maven version:"
                     ./mvnw --version
+                    
+                    # Executar build
                     ./mvnw clean package -DskipTests
                 '''
             }

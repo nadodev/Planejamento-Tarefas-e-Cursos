@@ -34,11 +34,11 @@ class DisponibilidadeRepositoryTest {
         usuario = new Usuario();
         usuario.setNome("Teste");
         usuario.setEmail("teste@email.com");
-        usuario.setSenha("senha123");
+        usuario.setSenhaHash("senha123");
         usuario = usuarioRepository.save(usuario);
 
         disponibilidade = new Disponibilidade();
-        disponibilidade.setDiaSemana(DiaSemana.SEGUNDA);
+        disponibilidade.setDiaSemana(DiaSemana.SEGUNDA_FEIRA);
         disponibilidade.setHoraInicio(LocalTime.of(9, 0));
         disponibilidade.setHoraFim(LocalTime.of(17, 0));
         disponibilidade.setUsuario(usuario);
@@ -51,23 +51,23 @@ class DisponibilidadeRepositoryTest {
 
         assertThat(result).isNotNull();
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getDiaSemana()).isEqualTo(DiaSemana.SEGUNDA);
+        assertThat(result.get(0).getDiaSemana()).isEqualTo(DiaSemana.SEGUNDA_FEIRA);
     }
 
     @Test
     void findByUsuarioIdAndDiaSemana_DeveRetornarLista() {
         List<Disponibilidade> result = disponibilidadeRepository.findByUsuarioIdAndDiaSemana(
-            usuario.getId(), DiaSemana.SEGUNDA);
+            usuario.getId(), DiaSemana.SEGUNDA_FEIRA);
 
         assertThat(result).isNotNull();
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getDiaSemana()).isEqualTo(DiaSemana.SEGUNDA);
+        assertThat(result.get(0).getDiaSemana()).isEqualTo(DiaSemana.SEGUNDA_FEIRA);
     }
 
     @Test
     void findByUsuarioIdAndDiaSemana_DiaDiferente_DeveRetornarListaVazia() {
         List<Disponibilidade> result = disponibilidadeRepository.findByUsuarioIdAndDiaSemana(
-            usuario.getId(), DiaSemana.TERCA);
+            usuario.getId(), DiaSemana.TERCA_FEIRA);
 
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();

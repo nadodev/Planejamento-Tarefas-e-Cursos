@@ -45,7 +45,7 @@ class DisponibilidadeIntegrationTest {
         usuario = new Usuario();
         usuario.setNome("Teste");
         usuario.setEmail("teste@email.com");
-        usuario.setSenha("senha123");
+        usuario.setSenhaHash("senha123");
         usuario = usuarioRepository.save(usuario);
 
         // Fazer login para obter token
@@ -61,7 +61,7 @@ class DisponibilidadeIntegrationTest {
 
         // Criar request de teste
         request = new DisponibilidadeRequest();
-        request.setDiaSemana(DiaSemana.SEGUNDA);
+        request.setDiaSemana(DiaSemana.SEGUNDA_FEIRA);
         request.setHoraInicio(LocalTime.of(9, 0));
         request.setHoraFim(LocalTime.of(17, 0));
     }

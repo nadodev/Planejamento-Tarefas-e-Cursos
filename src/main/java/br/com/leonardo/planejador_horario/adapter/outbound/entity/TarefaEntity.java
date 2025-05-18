@@ -1,42 +1,41 @@
 package br.com.leonardo.planejador_horario.adapter.outbound.entity;
 
-import br.com.leonardo.planejador_horario.domain.entities.Curso.NivelCurso;
+import br.com.leonardo.planejador_horario.domain.entities.Tarefa.Prioridade;
+import br.com.leonardo.planejador_horario.domain.entities.Tarefa.Status;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "cursos")
-public class CursoEntity {
-
+@Table(name = "tarefas")
+public class TarefaEntity {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String nome;
+    private String titulo;
 
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
-    @Column(name = "carga_horaria", nullable = false)
-    private Integer cargaHoraria;
-
     @Column(nullable = false)
-    private Integer prioridade;
-
-    @Column(name = "prazo_final", nullable = false)
-    private LocalDate prazoFinal;
-
-    @Column(nullable = false)
-    private String plataforma;
-
-    @Column
-    private String link;
+    private LocalDate prazo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NivelCurso nivel;
+    private Prioridade prioridade;
+
+    @Column(nullable = false)
+    private String categoria;
+
+    @Column(name = "tempo_estimado", nullable = false)
+    private Integer tempoEstimado;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Status status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
@@ -58,6 +57,7 @@ public class CursoEntity {
         dataAtualizacao = LocalDateTime.now();
     }
 
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -66,12 +66,12 @@ public class CursoEntity {
         this.id = id;
     }
 
-    public String getNome() {
-        return nome;
+    public String getTitulo() {
+        return titulo;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
     }
 
     public String getDescricao() {
@@ -82,52 +82,44 @@ public class CursoEntity {
         this.descricao = descricao;
     }
 
-    public Integer getCargaHoraria() {
-        return cargaHoraria;
+    public LocalDate getPrazo() {
+        return prazo;
     }
 
-    public void setCargaHoraria(Integer cargaHoraria) {
-        this.cargaHoraria = cargaHoraria;
+    public void setPrazo(LocalDate prazo) {
+        this.prazo = prazo;
     }
 
-    public Integer getPrioridade() {
+    public Prioridade getPrioridade() {
         return prioridade;
     }
 
-    public void setPrioridade(Integer prioridade) {
+    public void setPrioridade(Prioridade prioridade) {
         this.prioridade = prioridade;
     }
 
-    public LocalDate getPrazoFinal() {
-        return prazoFinal;
+    public String getCategoria() {
+        return categoria;
     }
 
-    public void setPrazoFinal(LocalDate prazoFinal) {
-        this.prazoFinal = prazoFinal;
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
     }
 
-    public String getPlataforma() {
-        return plataforma;
+    public Integer getTempoEstimado() {
+        return tempoEstimado;
     }
 
-    public void setPlataforma(String plataforma) {
-        this.plataforma = plataforma;
+    public void setTempoEstimado(Integer tempoEstimado) {
+        this.tempoEstimado = tempoEstimado;
     }
 
-    public String getLink() {
-        return link;
+    public Status getStatus() {
+        return status;
     }
 
-    public void setLink(String link) {
-        this.link = link;
-    }
-
-    public NivelCurso getNivel() {
-        return nivel;
-    }
-
-    public void setNivel(NivelCurso nivel) {
-        this.nivel = nivel;
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public UsuarioEntity getUsuario() {
@@ -153,5 +145,4 @@ public class CursoEntity {
     public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
         this.dataAtualizacao = dataAtualizacao;
     }
-}
-
+} 

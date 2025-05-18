@@ -1,159 +1,199 @@
 # Planejador de Horário
 
-Sistema para planejamento e gerenciamento de horários de estudo, desenvolvido com Spring Boot seguindo os princípios da Arquitetura Hexagonal (Ports and Adapters).
-
-## Tecnologias Utilizadas
-
-- Java 21
-- Spring Boot 3.x
-- Spring Security + JWT
-- Spring Data JPA
-- H2 Database (para desenvolvimento)
-- Swagger/OpenAPI para documentação
-- JUnit 5 e Mockito para testes
+Sistema para gerenciamento de tarefas e disponibilidade de horários.
 
 ## Arquitetura
 
-O projeto segue a Arquitetura Hexagonal (também conhecida como Ports and Adapters), com a seguinte estrutura:
+O projeto segue a arquitetura hexagonal (ports and adapters) com as seguintes camadas:
 
 ```
 src/main/java/br/com/leonardo/planejador_horario/
 ├── adapter/
-│   ├── inbound/
-│   │   ├── controller/    # Controllers REST
-│   │   ├── dto/          # DTOs para request/response
-│   │   └── exception/    # Handlers de exceção
-│   └── outbound/
-│       ├── entity/       # Entidades JPA
-│       ├── mapper/       # Mapeadores entre domínio e entidades
-│       └── persistence/  # Implementações de repositório
-├── application/
-│   └── port/
-│       └── out/         # Interfaces de repositório
-├── config/
-│   └── security/       # Configurações de segurança e JWT
-├── domain/
-│   ├── exception/      # Exceções de domínio
-│   ├── model/         # Modelos de domínio
-│   └── validator/     # Validadores
-└── usecase/           # Casos de uso da aplicação
-    ├── auth/          # Casos de uso de autenticação
-    └── impl/          # Implementações dos casos de uso
+│   ├── inbound/           # Adaptadores de entrada (controllers, DTOs)
+│   └── outbound/          # Adaptadores de saída (repositories, entidades)
+├── domain/                # Regras de negócio e entidades
+│   ├── entities/          # Entidades de domínio
+│   ├── enums/            # Enums do domínio
+│   ├── exception/        # Exceções do domínio
+│   ├── repository/       # Interfaces dos repositórios
+│   └── service/          # Serviços de domínio
+└── config/               # Configurações da aplicação
 ```
 
-## Funcionalidades
+### Diagrama de Sequência - Criação de Tarefa
 
-### Módulo de Autenticação
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant S as Service
+    participant R as Repository
+    participant DB as Database
 
-- Registro de usuário
-- Login com JWT
-- Proteção de rotas com token Bearer
-
-### Módulo de Usuários
-
-- Criar usuário
-- Listar usuários
-- Buscar usuário por ID
-- Atualizar usuário
-- Deletar usuário
-
-### Módulo de Cursos
-
-- Criar curso
-- Listar todos os cursos
-- Listar cursos por usuário
-- Deletar curso
-
-## Como Executar
-
-1. Clone o repositório:
-```bash
-git clone https://github.com/seu-usuario/planejador_horario.git
-cd planejador_horario
+    C->>S: criarTarefa(tarefaDTO)
+    S->>R: findByUsuarioId(usuarioId)
+    R->>DB: SELECT * FROM tarefas
+    DB-->>R: Resultado
+    R-->>S: Lista de tarefas
+    S->>S: Validar conflitos
+    S->>R: save(tarefa)
+    R->>DB: INSERT INTO tarefas
+    DB-->>R: Tarefa salva
+    R-->>S: Tarefa
+    S-->>C: TarefaDTO
 ```
 
-2. Execute a aplicação:
-```bash
-./mvnw spring-boot:run
+### Diagrama de Sequência - Gerenciamento de Disponibilidade
+
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant S as Service
+    participant R as Repository
+    participant DB as Database
+
+    C->>S: criar(disponibilidadeRequest)
+    S->>R: findByUsuarioIdAndDiaSemana()
+    R->>DB: SELECT * FROM disponibilidades
+    DB-->>R: Resultado
+    R-->>S: Lista de disponibilidades
+    S->>S: Validar sobreposição
+    S->>R: save(disponibilidade)
+    R->>DB: INSERT INTO disponibilidades
+    DB-->>R: Disponibilidade salva
+    R-->>S: Disponibilidade
+    S-->>C: DisponibilidadeResponse
 ```
 
-3. Acesse a documentação da API:
-```
-http://tko84w4c0wks8wo0oc8gwwk8.31.97.20.184.sslip.io:9090/swagger-ui.html
-```
+## Decisões Técnicas
 
-## Testando a API
+### 1. Arquitetura Hexagonal
+- **Motivo**: Separação clara entre regras de negócio e infraestrutura
+- **Benefícios**: 
+  - Testabilidade
+  - Manutenibilidade
+  - Independência de frameworks
 
-### Usando o Swagger
+### 2. Spring Security com JWT
+- **Motivo**: Autenticação segura e stateless
+- **Implementação**: 
+  - Token JWT com expiração
+  - Refresh token
+  - Validação de permissões
 
-Acesse a documentação interativa em `http://tko84w4c0wks8wo0oc8gwwk8.31.97.20.184.sslip.io:9090/swagger-ui.html`. A interface do Swagger permite:
+### 3. Validações de Domínio
+- **Motivo**: Garantir integridade dos dados
+- **Implementação**:
+  - Validações em entidades
+  - Exceções específicas
+  - Mensagens claras
 
-1. Visualizar todos os endpoints disponíveis
-2. Testar as requisições diretamente pelo navegador
-3. Ver os modelos de dados e exemplos de requisição/resposta
-4. Autenticar-se usando o botão "Authorize" com o token JWT
+## Exemplos de Uso
 
-## Exemplos de Requisições
+### 1. Criar Tarefa
 
-### Registrar Usuário
+```http
+POST /api/tarefas
+Authorization: Bearer {token}
+Content-Type: application/json
 
-```json
-POST /api/usuarios
 {
-    "nome": "João da Silva",
-    "email": "joao@email.com",
-    "senha": "senha123"
+  "titulo": "Implementar API",
+  "descricao": "Desenvolver endpoints REST",
+  "status": "PENDENTE",
+  "prioridade": "ALTA",
+  "categoria": "DESENVOLVIMENTO",
+  "dataInicio": "2024-03-20",
+  "dataFim": "2024-03-25"
 }
 ```
 
-### Login
+### 2. Listar Tarefas por Status
 
-```json
-POST /api/auth/login
+```http
+GET /api/tarefas/status/PENDENTE
+Authorization: Bearer {token}
+```
+
+### 3. Criar Disponibilidade
+
+```http
+POST /api/disponibilidade
+Authorization: Bearer {token}
+Content-Type: application/json
+
 {
-    "email": "joao@email.com",
-    "senha": "senha123"
+  "diaSemana": "SEGUNDA",
+  "horaInicio": "09:00",
+  "horaFim": "17:00"
 }
 ```
 
-### Criar Curso (Autenticado)
+### 4. Listar Disponibilidade por Dia
 
-```json
-POST /api/cursos
-{
-    "nome": "Curso de Spring Boot",
-    "descricao": "Curso completo de Spring Boot",
-    "cargaHoraria": 40,
-    "prioridade": 3,
-    "prazoFinal": "2024-12-31"
-}
+```http
+GET /api/disponibilidade/usuario/{id}/dia/SEGUNDA
+Authorization: Bearer {token}
 ```
 
-## Segurança
+## Regras de Negócio
 
-O sistema utiliza autenticação JWT (JSON Web Token) com as seguintes características:
+### Tarefas
+1. Não pode haver tarefas sobrepostas no mesmo horário
+2. Tarefas atrasadas são marcadas automaticamente
+3. Prioridades: BAIXA, MEDIA, ALTA
+4. Status: PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA
 
-- Tokens com expiração de 24 horas
-- Autenticação via header `Authorization: Bearer {token}`
-- Endpoints públicos:
-  - `/api/auth/login`
-  - `/api/usuarios` (POST - registro)
-  - `/v3/api-docs/**`
-  - `/swagger-ui/**`
-- Demais endpoints requerem autenticação
+### Disponibilidade
+1. Não pode haver horários sobrepostos no mesmo dia
+2. Horário de início deve ser anterior ao de fim
+3. Disponibilidade é por dia da semana
+4. Múltiplos horários por dia são permitidos
 
 ## Testes
 
-O projeto inclui testes unitários e de integração. Para executar os testes:
+O projeto possui testes em diferentes níveis:
 
+1. **Testes de Integração**
+   - `TarefaIntegrationTest`
+   - `DisponibilidadeIntegrationTest`
+
+2. **Testes de Serviço**
+   - `TarefaServiceTest`
+   - `DisponibilidadeServiceTest`
+
+3. **Testes de Repository**
+   - `TarefaRepositoryTest`
+   - `DisponibilidadeRepositoryTest`
+
+Para executar os testes:
 ```bash
 ./mvnw test
 ```
 
-## Contribuindo
+Para verificar cobertura:
+```bash
+./mvnw test jacoco:report
+```
 
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. Faça commit das suas alterações (`git commit -am 'Adiciona nova feature'`)
-4. Faça push para a branch (`git push origin feature/nova-feature`)
-5. Crie um Pull Request
+## Configuração do Ambiente
+
+1. Java 17
+2. Maven
+3. PostgreSQL
+4. IDE recomendada: IntelliJ IDEA
+
+### Variáveis de Ambiente
+```properties
+# Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/planejador
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+
+# JWT
+jwt.secret=seu_secret_aqui
+jwt.expiration=86400000
+```
+
+## Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.

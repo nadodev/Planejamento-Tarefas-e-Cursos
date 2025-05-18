@@ -3,6 +3,8 @@ version: '3.8'
 services:
   app:
     build: .
+    ports:
+      - "9090:9090"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-planejador:3306/tempomente?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&zeroDateTimeBehavior=convertToNull

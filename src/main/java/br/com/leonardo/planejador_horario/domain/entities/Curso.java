@@ -1,14 +1,13 @@
-package br.com.leonardo.planejador_horario.adapter.outbound.entity;
+package br.com.leonardo.planejador_horario.domain.entities;
 
-import br.com.leonardo.planejador_horario.domain.entities.Curso.NivelCurso;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cursos")
-public class CursoEntity {
-
+public class Curso {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,14 +37,14 @@ public class CursoEntity {
     @Column(nullable = false)
     private NivelCurso nivel;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
-    private UsuarioEntity usuario;
+    private Usuario usuario;
 
-    @Column(name = "data_criacao", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "data_criacao", nullable = false, updatable = false)
     private LocalDateTime dataCriacao;
 
-    @Column(name = "data_atualizacao", columnDefinition = "TIMESTAMP NULL DEFAULT NULL")
+    @Column(name = "data_atualizacao")
     private LocalDateTime dataAtualizacao;
 
     @PrePersist
@@ -58,6 +57,13 @@ public class CursoEntity {
         dataAtualizacao = LocalDateTime.now();
     }
 
+    public enum NivelCurso {
+        INICIANTE,
+        INTERMEDIARIO,
+        AVANCADO
+    }
+
+    // Getters e Setters
     public Long getId() {
         return id;
     }
@@ -130,11 +136,11 @@ public class CursoEntity {
         this.nivel = nivel;
     }
 
-    public UsuarioEntity getUsuario() {
+    public Usuario getUsuario() {
         return usuario;
     }
 
-    public void setUsuario(UsuarioEntity usuario) {
+    public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
     }
 
@@ -153,5 +159,4 @@ public class CursoEntity {
     public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
         this.dataAtualizacao = dataAtualizacao;
     }
-}
-
+} 

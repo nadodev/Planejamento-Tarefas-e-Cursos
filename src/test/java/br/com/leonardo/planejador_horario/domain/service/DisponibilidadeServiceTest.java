@@ -50,19 +50,19 @@ class DisponibilidadeServiceTest {
 
         disponibilidade = new Disponibilidade();
         disponibilidade.setId(1L);
-        disponibilidade.setDiaSemana(DiaSemana.SEGUNDA);
+        disponibilidade.setDiaSemana(DiaSemana.SEGUNDA_FEIRA);
         disponibilidade.setHoraInicio(LocalTime.of(9, 0));
         disponibilidade.setHoraFim(LocalTime.of(17, 0));
         disponibilidade.setUsuario(usuario);
 
         request = new DisponibilidadeRequest();
-        request.setDiaSemana(DiaSemana.SEGUNDA);
+        request.setDiaSemana(DiaSemana.SEGUNDA_FEIRA);
         request.setHoraInicio(LocalTime.of(9, 0));
         request.setHoraFim(LocalTime.of(17, 0));
 
         response = new DisponibilidadeResponse();
         response.setId(1L);
-        response.setDiaSemana(DiaSemana.SEGUNDA);
+        response.setDiaSemana(DiaSemana.SEGUNDA_FEIRA);
         response.setHoraInicio(LocalTime.of(9, 0));
         response.setHoraFim(LocalTime.of(17, 0));
     }
@@ -97,11 +97,11 @@ class DisponibilidadeServiceTest {
         when(disponibilidadeRepository.findByUsuarioIdAndDiaSemana(anyLong(), any(DiaSemana.class)))
                 .thenReturn(Arrays.asList(disponibilidade));
 
-        List<DisponibilidadeResponse> result = disponibilidadeService.listarPorUsuarioEDia(1L, DiaSemana.SEGUNDA);
+        List<DisponibilidadeResponse> result = disponibilidadeService.listarPorUsuarioEDia(1L, DiaSemana.SEGUNDA_FEIRA);
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(disponibilidadeRepository).findByUsuarioIdAndDiaSemana(1L, DiaSemana.SEGUNDA);
+        verify(disponibilidadeRepository).findByUsuarioIdAndDiaSemana(1L, DiaSemana.SEGUNDA_FEIRA);
     }
 
     @Test

@@ -36,13 +36,13 @@ class DisponibilidadeControllerTest {
         MockitoAnnotations.openMocks(this);
         
         request = new DisponibilidadeRequest();
-        request.setDiaSemana(DiaSemana.SEGUNDA);
+        request.setDiaSemana(DiaSemana.SEGUNDA_FEIRA);
         request.setHoraInicio(LocalTime.of(9, 0));
         request.setHoraFim(LocalTime.of(17, 0));
 
         response = new DisponibilidadeResponse();
         response.setId(1L);
-        response.setDiaSemana(DiaSemana.SEGUNDA);
+        response.setDiaSemana(DiaSemana.SEGUNDA_FEIRA);
         response.setHoraInicio(LocalTime.of(9, 0));
         response.setHoraFim(LocalTime.of(17, 0));
     }
@@ -75,11 +75,11 @@ class DisponibilidadeControllerTest {
         List<DisponibilidadeResponse> disponibilidades = Arrays.asList(response);
         when(disponibilidadeService.listarPorUsuarioEDia(anyLong(), any(DiaSemana.class))).thenReturn(disponibilidades);
 
-        ResponseEntity<List<DisponibilidadeResponse>> result = disponibilidadeController.listarPorUsuarioEDia(1L, DiaSemana.SEGUNDA);
+        ResponseEntity<List<DisponibilidadeResponse>> result = disponibilidadeController.listarPorUsuarioEDia(1L, DiaSemana.SEGUNDA_FEIRA);
 
         assertEquals(HttpStatus.OK, result.getStatusCode());
         assertEquals(disponibilidades, result.getBody());
-        verify(disponibilidadeService).listarPorUsuarioEDia(1L, DiaSemana.SEGUNDA);
+        verify(disponibilidadeService).listarPorUsuarioEDia(1L, DiaSemana.SEGUNDA_FEIRA);
     }
 
     @Test

@@ -46,6 +46,12 @@ public class TarefaDTO {
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
 
+    @Schema(description = "Data de início da tarefa", example = "2024-01-01")
+    private LocalDate dataInicio;
+
+    @Schema(description = "Data de fim da tarefa", example = "2024-01-31")
+    private LocalDate dataFim;
+
     // Getters e Setters
     public Long getId() {
         return id;
@@ -133,5 +139,21 @@ public class TarefaDTO {
 
     public void setDataAtualizacao(LocalDateTime dataAtualizacao) {
         this.dataAtualizacao = dataAtualizacao;
+    }
+
+    public LocalDate getDataInicio() {
+        return dataInicio;
+    }
+
+    public void setDataInicio(LocalDate dataInicio) {
+        this.dataInicio = dataInicio;
+    }
+
+    public LocalDate getDataFim() {
+        return dataFim;
+    }
+
+    public void setDataFim(LocalDate dataFim) {
+        this.dataFim = dataFim;
     }
 } 

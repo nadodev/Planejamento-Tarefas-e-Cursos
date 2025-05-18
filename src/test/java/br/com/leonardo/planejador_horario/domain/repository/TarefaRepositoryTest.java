@@ -37,7 +37,7 @@ class TarefaRepositoryTest {
         usuario = new Usuario();
         usuario.setNome("Teste");
         usuario.setEmail("teste@email.com");
-        usuario.setSenha("senha123");
+        usuario.setSenhaHash("senha123");
         usuario = usuarioRepository.save(usuario);
 
         tarefa = new Tarefa();
